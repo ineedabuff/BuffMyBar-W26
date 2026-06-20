@@ -1,4 +1,4 @@
-# BuffBar
+# BuffMyBar-W26
 
 Barre supérieure native pour Windows 11, en C# / .NET 8 / WPF.
 Complète la barre des tâches (ne la remplace pas), à la manière de **Waybar** sous
