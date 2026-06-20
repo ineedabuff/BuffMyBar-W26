@@ -1,0 +1,28 @@
+<UserControl x:Class="BuffBar.Widgets.Clock.ClockWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             VerticalAlignment="Stretch">
+
+    <!-- Module encadré, contenu parfaitement centré (heure + date empilées) -->
+    <Border Style="{StaticResource ModuleBorder}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+
+            <TextBlock x:Name="TimeText"
+                       Style="{StaticResource ModuleText}"
+                       HorizontalAlignment="Center"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       LineHeight="18"
+                       LineStackingStrategy="BlockLineHeight"/>
+
+            <TextBlock x:Name="DateText"
+                       Style="{StaticResource ModuleText}"
+                       HorizontalAlignment="Center"
+                       Foreground="{StaticResource SubtleText}"
+                       FontSize="11"
+                       LineHeight="13"
+                       LineStackingStrategy="BlockLineHeight"/>
+
+        </StackPanel>
+    </Border>
+</UserControl>

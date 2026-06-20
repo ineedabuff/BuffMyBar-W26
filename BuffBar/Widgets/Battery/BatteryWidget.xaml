@@ -1,0 +1,12 @@
+<UserControl x:Class="BuffBar.Widgets.Battery.BatteryWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             VerticalAlignment="Stretch">
+
+    <Border x:Name="Root" Style="{StaticResource ModuleBorder}">
+        <TextBlock x:Name="Label"
+                   Style="{StaticResource ModuleText}"
+                   FontSize="13"
+                   HorizontalAlignment="Center"/>
+    </Border>
+</UserControl>

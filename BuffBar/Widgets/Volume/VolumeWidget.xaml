@@ -1,0 +1,17 @@
+<UserControl x:Class="BuffBar.Widgets.Volume.VolumeWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             VerticalAlignment="Stretch">
+
+    <!-- Molette = +/- volume, clic gauche = muet -->
+    <Border x:Name="Root"
+            Style="{StaticResource ModuleBorder}"
+            MouseWheel="OnMouseWheel"
+            MouseLeftButtonUp="OnLeftClick"
+            ToolTip="Molette : volume — Clic : muet">
+        <TextBlock x:Name="Label"
+                   Style="{StaticResource ModuleText}"
+                   FontSize="13"
+                   HorizontalAlignment="Center"/>
+    </Border>
+</UserControl>

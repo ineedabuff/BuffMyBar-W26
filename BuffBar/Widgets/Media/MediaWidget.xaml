@@ -1,0 +1,24 @@
+<UserControl x:Class="BuffBar.Widgets.Media.MediaWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:common="clr-namespace:BuffBar.Widgets.Common"
+             VerticalAlignment="Stretch">
+
+    <!-- Clic gauche = lecture/pause, molette = piste précédente/suivante -->
+    <Border x:Name="Root"
+            Style="{StaticResource ModuleBorder}"
+            MouseLeftButtonUp="OnClick"
+            MouseWheel="OnWheel"
+            ToolTip="Clic : lecture/pause — Molette : piste précédente/suivante">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="Icon"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Margin="0,0,8,0"/>
+            <common:MarqueeText x:Name="Label"
+                                MaxWidth="260"
+                                TextSize="12"
+                                VerticalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</UserControl>

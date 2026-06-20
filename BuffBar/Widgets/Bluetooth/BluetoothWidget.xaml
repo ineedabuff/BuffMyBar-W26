@@ -1,0 +1,24 @@
+<UserControl x:Class="BuffBar.Widgets.Bluetooth.BluetoothWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:common="clr-namespace:BuffBar.Widgets.Common"
+             VerticalAlignment="Stretch">
+
+    <Border x:Name="Root" Style="{StaticResource ModuleBorder}" ToolTip="Bluetooth">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="Icon"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Margin="0,0,8,0"
+                       Text="&#xF293;"/>
+            <common:MarqueeText x:Name="DeviceName"
+                                MaxWidth="180"
+                                TextSize="12"
+                                VerticalAlignment="Center"/>
+            <TextBlock x:Name="Batt"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Margin="8,0,0,0"/>
+        </StackPanel>
+    </Border>
+</UserControl>

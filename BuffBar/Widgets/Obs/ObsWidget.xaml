@@ -1,0 +1,19 @@
+<UserControl x:Class="BuffBar.Widgets.Obs.ObsWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             VerticalAlignment="Stretch">
+
+    <Border x:Name="Root" Style="{StaticResource ModuleBorder}" ToolTip="État d'enregistrement OBS">
+        <StackPanel x:Name="Glyphs" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="Dot"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="10"
+                       Margin="0,0,6,0"
+                       Text="&#x25CF;"/>
+            <TextBlock x:Name="Rec"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Text="REC"/>
+        </StackPanel>
+    </Border>
+</UserControl>
