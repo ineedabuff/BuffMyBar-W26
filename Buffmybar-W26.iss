@@ -8,7 +8,7 @@
 #define AppName "Buffmybar-W26"
 #define AppExe "BuffBar.exe"
 #define AppVersion "0.9.0"
-#define Publisher "ineedabuff"
+#define Publisher "IneedABUFF"
 
 [Setup]
 AppId={{B0FFBA12-2026-4B0F-BA12-A1B2C3D4E5F6}

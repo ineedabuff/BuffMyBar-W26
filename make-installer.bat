@@ -18,16 +18,26 @@ if errorlevel 1 (
 
 echo.
 echo [2/2] Compilation de l'installateur avec Inno Setup...
-set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
-if not exist "%ISCC%" set "ISCC=%ProgramFiles%\Inno Setup 6\ISCC.exe"
-if not exist "%ISCC%" (
+
+set "ISCC="
+for %%P in (
+  "%ProgramFiles%\Inno Setup 7\ISCC.exe"
+  "%ProgramFiles(x86)%\Inno Setup 7\ISCC.exe"
+  "%ProgramFiles%\Inno Setup 6\ISCC.exe"
+  "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+) do if not defined ISCC if exist "%%~P" set "ISCC=%%~P"
+
+if not defined ISCC for /f "delims=" %%I in ('where ISCC.exe 2^>nul') do if not defined ISCC set "ISCC=%%I"
+
+if not defined ISCC (
   echo.
   echo Inno Setup introuvable.
-  echo Installe-le gratuitement depuis : https://jrsoftware.org/isdl.php
-  echo puis relance ce script.
+  echo - Installe-le gratuitement : https://jrsoftware.org/isdl.php
+  echo - Ou ouvre Buffmybar-W26.iss dans l'editeur Inno Setup puis Build ^> Compile.
   pause & exit /b 1
 )
 
+echo Compilateur : "%ISCC%"
 "%ISCC%" "Buffmybar-W26.iss"
 if errorlevel 1 (
   echo.
