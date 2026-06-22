@@ -34,13 +34,9 @@ public partial class ClockWidget : UserControl, IBarWidget
 
         Loaded += (_, _) => { Refresh(); _timer.Start(); };
         Unloaded += (_, _) => _timer.Stop();
-    }
 
-    private void OnClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (!Flyout.IsOpen)
-            Calendar.ResetToToday();   // recentre sur le mois courant à l'ouverture
-        Flyout.IsOpen = !Flyout.IsOpen;
+        // Ouverture du calendrier au survol (recentré sur le mois courant).
+        Widgets.Common.HoverPopup.Attach(Root, Flyout, Calendar, onOpening: Calendar.ResetToToday);
     }
 
     private void Refresh()

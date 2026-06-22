@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ineedabuff")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+fb4f9b63c3002bcf4521afbb6c1e6c35795b8c3d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+34691bdf22a369c27fa1b170183b4273c5395a5f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BuffBar")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BuffBar")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]

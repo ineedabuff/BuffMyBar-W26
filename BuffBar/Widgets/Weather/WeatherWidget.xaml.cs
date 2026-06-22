@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
@@ -38,14 +37,12 @@ public partial class WeatherWidget : UserControl, IBarWidget
 
         Loaded += async (_, _) => { await Refresh(); _timer.Start(); };
         Unloaded += (_, _) => _timer.Stop();
-    }
 
-    private void OnClick(object sender, MouseButtonEventArgs e)
-    {
-        if (!_hasData) return;   // rien à montrer tant qu'on n'a pas de données
-        if (!Flyout.IsOpen)
-            Applet.Update(_last);
-        Flyout.IsOpen = !Flyout.IsOpen;
+        // Ouverture de l'applet au survol, seulement si des données sont disponibles.
+        Widgets.Common.HoverPopup.Attach(
+            Root, Flyout, Applet,
+            onOpening: () => Applet.Update(_last),
+            canOpen: () => _hasData);
     }
 
     private async Task Refresh()

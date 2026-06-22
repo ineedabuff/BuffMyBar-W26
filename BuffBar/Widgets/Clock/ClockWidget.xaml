@@ -8,9 +8,7 @@
         <!-- Module encadré, contenu parfaitement centré (heure + date empilées) -->
         <Border x:Name="Root"
                 Style="{StaticResource ModuleBorder}"
-                Cursor="Hand"
-                MouseLeftButtonUp="OnClick"
-                ToolTip="Cliquer pour afficher le calendrier">
+                ToolTip="Calendrier (au survol)">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
                 <TextBlock x:Name="TimeText"
@@ -32,11 +30,11 @@
             </StackPanel>
         </Border>
 
-        <!-- Flyout calendrier (s'ouvre au clic) -->
+        <!-- Flyout calendrier (s'ouvre au survol) -->
         <Popup x:Name="Flyout"
                PlacementTarget="{Binding ElementName=Root}"
                Placement="Bottom"
-               StaysOpen="False"
+               StaysOpen="True"
                AllowsTransparency="True"
                PopupAnimation="Fade"
                VerticalOffset="4">
