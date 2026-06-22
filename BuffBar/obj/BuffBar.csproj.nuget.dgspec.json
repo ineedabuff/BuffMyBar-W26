@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj": {}
+    "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj": {}
   },
   "projects": {
-    "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj": {
+    "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj": {
       "version": "0.1.0",
       "restore": {
-        "projectUniqueName": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj",
+        "projectUniqueName": "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
         "projectName": "BuffBar",
-        "projectPath": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj",
+        "projectPath": "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
         "packagesPath": "C:\\Users\\buff\\.nuget\\packages\\",
-        "outputPath": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\obj\\",
+        "outputPath": "D:\\Github\\BuffMyBar-W26\\BuffBar\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\buff\\AppData\\Roaming\\NuGet\\NuGet.Config"

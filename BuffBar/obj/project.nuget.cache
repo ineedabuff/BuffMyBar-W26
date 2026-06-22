@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "72fURSS6dcA=",
+  "dgSpecHash": "jhAbhejU0+I=",
   "success": true,
-  "projectFilePath": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj",
+  "projectFilePath": "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\buff\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.28\\microsoft.net.illink.tasks.8.0.28.nupkg.sha512",
     "C:\\Users\\buff\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.28\\microsoft.netcore.app.ref.8.0.28.nupkg.sha512",
