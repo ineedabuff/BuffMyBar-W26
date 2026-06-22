@@ -6,7 +6,7 @@
 
     <Border Style="{StaticResource ModuleBorder}">
         <viz:SpectrumView x:Name="Spectrum"
-                          Width="120"
+                          Width="240"
                           VerticalAlignment="Stretch"
                           ClipToBounds="True"/>
     </Border>

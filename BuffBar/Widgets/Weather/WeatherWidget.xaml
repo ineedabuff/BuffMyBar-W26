@@ -1,17 +1,35 @@
 <UserControl x:Class="BuffBar.Widgets.Weather.WeatherWidget"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BuffBar.Widgets.Weather"
              VerticalAlignment="Stretch">
 
-    <Border x:Name="Root" Style="{StaticResource ModuleBorder}">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock x:Name="Icon"
-                       Style="{StaticResource ModuleText}"
-                       FontSize="13"
-                       Margin="0,0,8,0"/>
-            <TextBlock x:Name="Temp"
-                       Style="{StaticResource ModuleText}"
-                       FontSize="12"/>
-        </StackPanel>
-    </Border>
+    <Grid>
+        <Border x:Name="Root"
+                Style="{StaticResource ModuleBorder}"
+                Cursor="Hand"
+                MouseLeftButtonUp="OnClick"
+                ToolTip="Cliquer pour les prévisions">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="Icon"
+                           Style="{StaticResource ModuleText}"
+                           FontSize="13"
+                           Margin="0,0,8,0"/>
+                <TextBlock x:Name="Temp"
+                           Style="{StaticResource ModuleText}"
+                           FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Flyout prévisions (s'ouvre au clic) -->
+        <Popup x:Name="Flyout"
+               PlacementTarget="{Binding ElementName=Root}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               VerticalOffset="4">
+            <local:WeatherFlyout x:Name="Applet"/>
+        </Popup>
+    </Grid>
 </UserControl>

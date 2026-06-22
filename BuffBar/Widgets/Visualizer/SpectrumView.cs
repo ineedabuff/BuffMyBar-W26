@@ -12,12 +12,12 @@ public sealed class SpectrumView : FrameworkElement
 {
     private float[] _levels = Array.Empty<float>();
     private readonly Brush _brush;
-    private const double Gap = 2.0;
+    private const double Gap = 1.0;
 
     public SpectrumView()
     {
+        // Pinceau partagé "PrimaryText" : NON figé pour suivre le thème Windows en direct.
         _brush = (Application.Current?.TryFindResource("PrimaryText") as Brush) ?? Brushes.White;
-        if (_brush.CanFreeze) _brush.Freeze();
     }
 
     /// <summary>Met à jour les niveaux (0..1) et redessine.</summary>

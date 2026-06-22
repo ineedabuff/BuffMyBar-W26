@@ -1,28 +1,46 @@
 <UserControl x:Class="BuffBar.Widgets.Clock.ClockWidget"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BuffBar.Widgets.Clock"
              VerticalAlignment="Stretch">
 
-    <!-- Module encadré, contenu parfaitement centré (heure + date empilées) -->
-    <Border Style="{StaticResource ModuleBorder}">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+    <Grid>
+        <!-- Module encadré, contenu parfaitement centré (heure + date empilées) -->
+        <Border x:Name="Root"
+                Style="{StaticResource ModuleBorder}"
+                Cursor="Hand"
+                MouseLeftButtonUp="OnClick"
+                ToolTip="Cliquer pour afficher le calendrier">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-            <TextBlock x:Name="TimeText"
-                       Style="{StaticResource ModuleText}"
-                       HorizontalAlignment="Center"
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       LineHeight="18"
-                       LineStackingStrategy="BlockLineHeight"/>
+                <TextBlock x:Name="TimeText"
+                           Style="{StaticResource ModuleText}"
+                           HorizontalAlignment="Center"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           LineHeight="18"
+                           LineStackingStrategy="BlockLineHeight"/>
 
-            <TextBlock x:Name="DateText"
-                       Style="{StaticResource ModuleText}"
-                       HorizontalAlignment="Center"
-                       Foreground="{StaticResource SubtleText}"
-                       FontSize="11"
-                       LineHeight="13"
-                       LineStackingStrategy="BlockLineHeight"/>
+                <TextBlock x:Name="DateText"
+                           Style="{StaticResource ModuleText}"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource SubtleText}"
+                           FontSize="11"
+                           LineHeight="13"
+                           LineStackingStrategy="BlockLineHeight"/>
 
-        </StackPanel>
-    </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Flyout calendrier (s'ouvre au clic) -->
+        <Popup x:Name="Flyout"
+               PlacementTarget="{Binding ElementName=Root}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               VerticalOffset="4">
+            <local:CalendarFlyout x:Name="Calendar"/>
+        </Popup>
+    </Grid>
 </UserControl>

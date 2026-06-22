@@ -1,32 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Users\\Buff\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj": {}
+    "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj": {}
   },
   "projects": {
-    "D:\\Users\\Buff\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj": {
+    "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj": {
       "version": "0.1.0",
       "restore": {
-        "projectUniqueName": "D:\\Users\\Buff\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
+        "projectUniqueName": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj",
         "projectName": "BuffBar",
-        "projectPath": "D:\\Users\\Buff\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
-        "packagesPath": "C:\\Users\\Buff\\.nuget\\packages\\",
-        "outputPath": "D:\\Users\\Buff\\Github\\BuffMyBar-W26\\BuffBar\\obj\\",
+        "projectPath": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\BuffBar.csproj",
+        "packagesPath": "C:\\Users\\buff\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\buff\\Downloads\\BuffMyBar-W26-main\\BuffMyBar-W26-main\\BuffBar\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Buff\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\buff\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0-windows10.0.19041.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -73,7 +66,19 @@
           "warn": true,
           "downloadDependencies": [
             {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
               "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.28, 8.0.28]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
               "version": "[8.0.28, 8.0.28]"
             },
             {
@@ -83,6 +88,10 @@
             {
               "name": "Microsoft.Windows.SDK.NET.Ref",
               "version": "[10.0.19041.57, 10.0.19041.57]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.28, 8.0.28]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",

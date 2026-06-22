@@ -1,0 +1,43 @@
+<UserControl x:Class="BuffBar.Widgets.Clock.CalendarFlyout"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
+    <Border Style="{StaticResource FlyoutBorder}" Width="262">
+        <StackPanel>
+
+            <!-- En-tête : ‹  Mois AAAA  › -->
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="PrevButton" Grid.Column="0"
+                        Style="{StaticResource CalNavButton}" Content="&#xF053;"
+                        ToolTip="Mois précédent"/>
+
+                <TextBlock x:Name="MonthLabel" Grid.Column="1"
+                           Style="{StaticResource FlyoutHeading}"
+                           HorizontalAlignment="Center"/>
+
+                <Button x:Name="NextButton" Grid.Column="2"
+                        Style="{StaticResource CalNavButton}" Content="&#xF054;"
+                        ToolTip="Mois suivant"/>
+            </Grid>
+
+            <!-- En-tête des jours de la semaine (lundi -> dimanche) -->
+            <UniformGrid x:Name="WeekHeader" Columns="7" Margin="0,0,0,2"/>
+
+            <!-- Grille des jours -->
+            <UniformGrid x:Name="DayGrid" Columns="7"/>
+
+            <Border Height="1" Background="{StaticResource ModuleBorderBrush}" Margin="0,10,0,8"/>
+
+            <!-- Pied : date complète du jour -->
+            <TextBlock x:Name="TodayLabel"
+                       Style="{StaticResource FlyoutSubtle}"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</UserControl>

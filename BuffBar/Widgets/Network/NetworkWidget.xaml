@@ -11,7 +11,10 @@
                        Margin="0,0,8,0"/>
             <TextBlock x:Name="Ip"
                        Style="{StaticResource ModuleText}"
-                       FontSize="12"/>
+                       FontSize="12"
+                       Width="118"
+                       TextAlignment="Left"
+                       TextTrimming="CharacterEllipsis"/>
         </StackPanel>
     </Border>
 </UserControl>

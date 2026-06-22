@@ -124,4 +124,18 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+    // ---- DWM : fond translucide système (acrylique / mica), Windows 11 ----
+
+    [DllImport("dwmapi.dll", SetLastError = true)]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    public const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
+
+    public const int DWMSBT_AUTO = 0;
+    public const int DWMSBT_NONE = 1;
+    public const int DWMSBT_MAINWINDOW = 2;       // Mica
+    public const int DWMSBT_TRANSIENTWINDOW = 3;  // Acrylique (rendu de la barre des tâches)
+    public const int DWMSBT_TABBEDWINDOW = 4;     // Mica Alt
 }

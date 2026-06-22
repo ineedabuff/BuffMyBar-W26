@@ -45,8 +45,6 @@ public sealed class MarqueeText : Grid
     public MarqueeText()
     {
         ClipToBounds = true;
-        MaxWidth = 260;
-        HorizontalAlignment = HorizontalAlignment.Left;
 
         _t1.VerticalAlignment = VerticalAlignment.Center;
         _t2.VerticalAlignment = VerticalAlignment.Center;
@@ -85,8 +83,18 @@ public sealed class MarqueeText : Grid
             return;
         }
 
-        double max = double.IsNaN(MaxWidth) ? double.PositiveInfinity : MaxWidth;
+        // Largeur de référence (le « hublot ») :
+        //  - MaxWidth défini (mode plafonné, ex. Bluetooth) -> on s'y réfère ;
+        //  - sinon (mode étiré, ex. Média) -> on prend la largeur réellement allouée.
+        bool capped = !double.IsNaN(MaxWidth) && !double.IsInfinity(MaxWidth);
+        double viewport = capped ? MaxWidth : ActualWidth;
 
+        if (viewport <= 0)
+        {
+            // Pas encore mis en page (mode étiré) : on attend le prochain SizeChanged.
+            _t2.Visibility = Visibility.Collapsed;
+            return;
+        }
         // Mesure via la MISE EN PAGE (DesiredSize) — la même source que celle qui
         // positionne la 2e copie dans le StackPanel. Indispensable pour que la
         // distance d'animation corresponde EXACTEMENT à l'écart réel : sinon
@@ -94,9 +102,9 @@ public sealed class MarqueeText : Grid
         _t1.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         double textWidth = _t1.DesiredSize.Width;
 
-        if (textWidth <= max)
+        if (textWidth <= viewport)
         {
-            // Tient dans la largeur max : statique, une seule copie.
+            // Tient dans le hublot : statique, une seule copie.
             _t2.Visibility = Visibility.Collapsed;
             return;
         }

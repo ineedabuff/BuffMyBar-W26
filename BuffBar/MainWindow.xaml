@@ -24,21 +24,30 @@
     </Window.ContextMenu>
 
     <!--
-        Trois régions superposées dans une seule cellule pour que le CENTRE
-        soit aligné sur le centre réel de l'écran, indépendamment de la largeur
-        des modules gauche/droite (comportement type Waybar).
+        Grille 3 colonnes : gauche et droite en étoile (symétriques) -> le CENTRE
+        reste au centre réel. La zone gauche (DockPanel) laisse le Média remplir
+        tout l'espace restant jusqu'à l'heure.
     -->
     <Grid>
-        <StackPanel x:Name="LeftRegion"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <DockPanel x:Name="LeftRegion"
+                   Grid.Column="0"
+                   LastChildFill="True"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"/>
 
         <ContentControl x:Name="CenterRegion"
+                        Grid.Column="1"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"/>
 
         <StackPanel x:Name="RightRegion"
+                    Grid.Column="2"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Stretch"/>

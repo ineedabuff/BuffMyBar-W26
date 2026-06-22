@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using BuffBar.Interop;
+using BuffBar.Services;
 using BuffBar.Widgets.Battery;
 using BuffBar.Widgets.Bluetooth;
 using BuffBar.Widgets.Clock;
@@ -65,11 +66,18 @@ public partial class MainWindow : Window
         center.Children.Add(new ObsWidget());
         CenterRegion.Content = center;
 
-        // Gauche — [Météo] [Uptime] [Réseau] [Média]
-        LeftRegion.Children.Add(new WeatherWidget());
-        LeftRegion.Children.Add(new UptimeWidget());
-        LeftRegion.Children.Add(new NetworkWidget());
-        LeftRegion.Children.Add(new MediaWidget());
+        // Gauche — [Météo] [Uptime] [Réseau] occupent leur largeur naturelle,
+        // [Média] (dernier enfant du DockPanel) remplit tout l'espace restant.
+        var weather = new WeatherWidget();
+        var uptime = new UptimeWidget();
+        var network = new NetworkWidget();
+        DockPanel.SetDock(weather, Dock.Left);
+        DockPanel.SetDock(uptime, Dock.Left);
+        DockPanel.SetDock(network, Dock.Left);
+        LeftRegion.Children.Add(weather);
+        LeftRegion.Children.Add(uptime);
+        LeftRegion.Children.Add(network);
+        LeftRegion.Children.Add(new MediaWidget()); // LastChildFill -> remplit le reste
 
         // Droite — [Visualiseur] [Volume] [Bluetooth] [Batterie]
         // (StackPanel horizontal aligné à droite : ajout = gauche -> droite)
@@ -89,6 +97,9 @@ public partial class MainWindow : Window
             TargetMonitor = _targetMonitor
         };
         _appBar.Initialize();
+
+        // Fond translucide « acrylique » comme la barre des tâches (repli sûr si non supporté).
+        BackdropService.TryApply(this);
     }
 
     protected override void OnClosed(EventArgs e)

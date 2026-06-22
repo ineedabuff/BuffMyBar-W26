@@ -53,4 +53,76 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
+    <!-- ============================================================
+         Flyouts / applets (popups ouverts au clic sur un module)
+         ============================================================ -->
+
+    <!-- Fond du panneau : volontairement opaque et sombre, pour rester lisible
+         même quand la barre est en mode acrylique translucide. -->
+    <SolidColorBrush x:Key="FlyoutBackground" Color="#0C0C0C"/>
+
+    <Style x:Key="FlyoutBorder" TargetType="Border">
+        <Setter Property="Background"      Value="{StaticResource FlyoutBackground}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius"    Value="10"/>
+        <Setter Property="Padding"         Value="14"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55" Color="#000000"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="FlyoutHeading" TargetType="TextBlock" BasedOn="{StaticResource ModuleText}">
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize"   Value="14"/>
+    </Style>
+
+    <Style x:Key="FlyoutText" TargetType="TextBlock" BasedOn="{StaticResource ModuleText}">
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+
+    <Style x:Key="FlyoutSubtle" TargetType="TextBlock" BasedOn="{StaticResource ModuleText}">
+        <Setter Property="Foreground" Value="{StaticResource SubtleText}"/>
+        <Setter Property="FontSize"   Value="11"/>
+    </Style>
+
+    <!-- Bouton plat (jour de calendrier) -->
+    <Style x:Key="CalDayButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
+        <Setter Property="FontSize"   Value="12"/>
+        <Setter Property="Width"      Value="30"/>
+        <Setter Property="Height"     Value="28"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b"
+                            Background="{TemplateBinding Background}"
+                            TextElement.Foreground="{TemplateBinding Foreground}"
+                            CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource HoverBackground}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Bouton de navigation (mois précédent / suivant) -->
+    <Style x:Key="CalNavButton" TargetType="Button" BasedOn="{StaticResource CalDayButton}">
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="FontSize"   Value="14"/>
+        <Setter Property="Width"      Value="28"/>
+    </Style>
+
 </ResourceDictionary>

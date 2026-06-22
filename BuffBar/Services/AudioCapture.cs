@@ -17,9 +17,9 @@ namespace BuffBar.Services;
 /// </summary>
 public sealed class AudioCapture
 {
-    public const int Bands = 20;
+    public const int Bands = 64;
 
-    private const int FftSize = 1024;          // puissance de deux
+    private const int FftSize = 2048;          // puissance de deux (meilleure résolution bas du spectre)
     private const int HopSize = FftSize / 2;   // 50 % de recouvrement
     // --- Réglages de sensibilité (monte Gain et/ou baisse Curve pour plus de mouvement) ---
     private const double Gain = 1.65;           // gain visuel global

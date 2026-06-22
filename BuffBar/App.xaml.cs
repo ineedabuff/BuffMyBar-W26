@@ -24,6 +24,7 @@ public partial class App : Application
         // Résout la police Nerd Font installée AVANT le chargement des fenêtres.
         Logger.Log($"App: démarrage. Journal : {Logger.LogPath}");
         FontService.Apply();
+        ThemeService.Start();
 
         base.OnStartup(e);
 
