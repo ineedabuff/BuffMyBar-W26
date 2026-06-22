@@ -1,0 +1,2 @@
+D:\Github\BuffMyBar-W26\publish\BuffBar.pdb
+D:\Github\BuffMyBar-W26\publish\BuffBar.exe
