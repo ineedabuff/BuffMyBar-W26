@@ -1,91 +1,146 @@
-# BuffMyBar-W26
+# BuffBar
 
-Barre supérieure native pour Windows 11, en C# / .NET 8 / WPF.
+Barre supérieure native pour Windows 11, en **C# / .NET 8 / WPF**.
 Complète la barre des tâches (ne la remplace pas), à la manière de **Waybar** sous
 Linux ou des panneaux **KDE Plasma**.
 
-Esthétique : fond noir, texte blanc, modules encadrés gris, survol gris,
-JetBrainsMono Nerd Font.
+Esthétique « buff » : fond noir `#000000`, texte blanc, accent vert-jaune
+`#ddff24`, modules encadrés, **JetBrainsMono Nerd Font**. La barre peut aussi
+**suivre les couleurs de Windows 11** (clair/sombre + accentuation) et afficher un
+**fond acrylique translucide** comme la barre des tâches.
+
+> **Zéro dépendance** : aucun Electron / Python / processus externe. Uniquement
+> WPF + P/Invoke Win32 + projection WinRT, tout du framework.
 
 ---
 
-## v1 (cette version)
+## Disposition
+
+```
+[Météo] [Uptime] [Réseau] [Média ········· ]     [Heure] [● REC]     [ ········· Visualiseur] [Volume] [Bluetooth] [Batterie]
+└─────────── gauche (Média extensible) ──────┘   └ centre (centré) ┘   └──────────── droite (alignée à droite) ───────────┘
+```
+
+- **Gauche** — Météo · Uptime · Réseau · Média (le média occupe tout l'espace restant).
+- **Centre** — Horloge (+ OBS à sa droite), réellement centrée à l'écran.
+- **Droite** — Visualiseur · Volume · Bluetooth · Batterie.
+
+Au **survol** : pointer l'**heure** ouvre le calendrier, pointer la **météo** ouvre les prévisions.
+
+---
+
+## Historique des versions
+
+### v1.3 — Flyouts interactifs *(version actuelle)*
+
+- [x] **Survol = applet** (façon YASB). Utilitaire `HoverPopup` : ouverture au
+      survol du module, fermeture différée (~280 ms) tant que le pointeur est sur
+      le module **ou** sur le popup (pour pouvoir y entrer sans qu'il se referme).
+- [x] **Horloge → calendrier** : mini-calendrier mensuel français (semaine
+      débutant le lundi), navigation mois ‹ ›, jour courant en accent `#ddff24`,
+      recentré sur le mois courant à chaque ouverture.
+- [x] **Météo → applet détaillée** : grande icône + température, ressenti /
+      humidité / vent, et **prévisions sur 3 jours** (icône, max/min). Les données
+      sont déjà en cache → aucune requête réseau au survol.
+- [x] Styles de flyout dans `BuffTheme.xaml` : fond volontairement opaque (lisible
+      même quand la barre est en acrylique), liseré accent, coins arrondis, ombre.
+
+### v1.2 — Disposition dynamique + météo locale
+
+- [x] **Réseau à largeur fixe** — le module ne change plus de taille lors de
+      l'alternance IP locale / publique.
+- [x] **Média extensible** — grille 3 colonnes (`*` / `Auto` / `*`) + `DockPanel` :
+      le module Média remplit tout l'espace restant jusqu'à l'horloge, qui demeure
+      parfaitement centrée.
+- [x] **Visualiseur élargi** — largeur doublée et **64 barres** (FFT portée à 2048
+      pour une meilleure résolution dans les basses fréquences).
+- [x] **Météo** recentrée sur **Mascouche, Québec** (`BarConfig.WeatherLocation`).
+
+### v1.1 — Fond acrylique
+
+- [x] **Acrylique translucide natif** (DWM `DWMWA_SYSTEMBACKDROP_TYPE`), comme la
+      barre des tâches Windows 11. Repli sûr en opaque si le système ne le supporte
+      pas. Option `BarConfig.UseAcrylicBackdrop`.
+- [x] **Accent buff conservable** — option `BarConfig.KeepBuffAccent` pour garder
+      `#ddff24` même lorsque la barre suit le thème de Windows (sinon elle adopte
+      la couleur d'accentuation du système).
+
+### v1.0 — Thème Windows 11
+
+- [x] La barre suit le **mode clair/sombre** et la **couleur d'accentuation** de la
+      barre des tâches (`SystemUsesLightTheme`, `ColorPrevalence`, accent système),
+      avec mise à jour en direct. Désactivable via `BarConfig.FollowWindowsTheme`.
+      Les couleurs sémantiques (REC, paliers de volume) restent fixes.
+
+### v0.9 — Persistance plein écran
+
+- [x] La barre reste toujours au-dessus (`KeepBarOnTop`) et un « gardien » réduit
+      activement les fenêtres borderless / fenêtré plein écran à la zone de travail,
+      sous la barre (`ReclaimFullscreenWindows`). Limite : le plein écran
+      **exclusif** ne peut pas être recouvert (limite Windows) — jouer en borderless.
+
+### v0.8 — Multi-écrans + Uptime
+
+- [x] **Multi-écrans** — une barre persistante (AppBar) **par moniteur** :
+      énumération via `EnumDisplayMonitors`, réservation d'espace et DPI calculés
+      par écran (`GetDpiForMonitor`). Chaque écran a sa copie complète des modules.
+- [x] **Uptime** (entre météo et réseau) — temps depuis le démarrage (j / h / m).
+- [x] Visualiseur repassé en **blanc** ; volume coloré par niveau (> 15 % `#FF3131`,
+      > 10 % `#ddff24`, sinon blanc) ; ordre à droite : Visualiseur · Volume ·
+      Bluetooth · Batterie.
+
+### v0.7 — Réseau + Bluetooth
+
+- [x] **Réseau** (gauche) — une IP à la fois, alternance locale (maison) / publique
+      (globe) toutes les ~3 s. IP locale via socket, publique via HTTP. Détail en
+      infobulle.
+- [x] **Bluetooth** — nom + batterie du dispositif connecté (WinRT, classique + BLE),
+      alternance si plusieurs, masqué si aucun. Le % dépend du support du pilote.
+
+### v0.6 — OBS
+
+- [x] État d'enregistrement en direct via **obs-websocket v5** (client
+      `ClientWebSocket` natif, handshake + auth SHA256). Inactif : `● REC` blanc fixe.
+      Enregistrement : `● REC` `#FF3131` clignotant. Reconnexion automatique.
+      Hôte / port / mot de passe dans `BarConfig`.
+
+### v0.5 — Météo
+
+- [x] **wttr.in** (JSON `j1`, descriptions en français) selon
+      `BarConfig.WeatherLocation`. Icône Font Awesome + température, détail en
+      infobulle. Rafraîchit toutes les 15 min, conserve la dernière valeur en cas
+      d'échec réseau.
+
+### v0.4 — Média
+
+- [x] Session active du système via WinRT
+      (`GlobalSystemMediaTransportControlsSessionManager`, équivalent MPRIS) : icône
+      lecture/pause + titre défilant. **Clic** = lecture/pause, **molette** = piste
+      suivante/précédente. Masqué quand aucun lecteur n'est actif. (Le TFM passe à
+      `net8.0-windows10.0.19041.0` pour exposer WinRT, toujours sans paquet externe.)
+
+### v0.3 — Visualiseur audio
+
+- [x] Style Cava : capture **loopback WASAPI** en COM pur, FFT radix-2 maison,
+      bandes logarithmiques, lissage attaque/chute. Thread d'arrière-plan dédié,
+      ré-initialisation au changement de périphérique. Aucune dépendance.
+
+### v0.2 — Batterie + Volume
+
+- [x] **Batterie** — `GetSystemPowerStatus`, glyphe par niveau + éclair en charge,
+      masquée sur poste fixe sans batterie.
+- [x] **Volume** — Core Audio (COM) : glyphe à trois paliers + pourcentage.
+      **Molette** = ±2 %, **clic** = muet. Robuste au changement de périphérique.
+
+### Socle — AppBar native
 
 - [x] Barre **AppBar native** (`SHAppBarMessage`) — réservation réelle de l'espace
       écran : les fenêtres maximisées ne la recouvrent jamais.
-- [x] Positionnée en haut, hauteur 48 px (= barre des tâches Win 11), **DPI-aware** (PerMonitorV2).
-- [x] **Heure + date** centrées (français, locale `fr-CA`), mise à jour à la seconde.
+- [x] Positionnée en haut, hauteur 48 px, **DPI-aware** (PerMonitorV2).
+- [x] **Heure + date** centrées (locale `fr-CA`), mise à jour à la seconde.
 - [x] Démarrage automatique avec Windows (clé `Run`, idempotent).
 - [x] Fenêtre outil (hors Alt+Tab / barre des tâches), instance unique, légère.
-- [x] Passe sous les applications plein écran puis se restaure (comme la barre des tâches).
-- [x] Architecture modulaire prête pour les widgets.
-
-Disposition complète. Modules optionnels possibles plus tard.
-
-## v0.9
-
-- [x] **Persistance plein écran** — la barre reste toujours au-dessus (`KeepBarOnTop`)
-      et un « gardien » réduit activement les fenêtres borderless/fenêtré plein écran à
-      la zone de travail, sous la barre (`ReclaimFullscreenWindows`). Les deux options
-      dans `BarConfig`. Limite : le plein écran **exclusif** ne peut pas être recouvert
-      (limite Windows) — jouer en mode borderless.
-
-## v0.8
-
-- [x] **Multi-écrans** — une barre persistante (AppBar) **par moniteur** : énumération
-      via `EnumDisplayMonitors`, réservation d'espace et DPI calculés par écran
-      (`GetDpiForMonitor`). Chaque écran a sa copie complète des modules.
-- [x] **Uptime** (entre météo et réseau) — temps depuis le démarrage (j / h / m).
-- [x] Visualiseur repassé en **blanc**.
-- [x] Volume coloré par niveau : > 15 % en `#FF3131`, > 10 % en `#ddff24`, sinon blanc.
-- [x] Réordonné à droite : Visualiseur · Volume · Bluetooth · Batterie.
-
-## v0.7
-
-- [x] **Réseau** (gauche) — une seule IP à la fois, alternance locale (icône maison) /
-      publique (icône globe) toutes les ~3 s. IP locale via socket, IP publique via
-      service HTTP (rafraîchie périodiquement). Détail dans l'infobulle.
-- [x] **Bluetooth** (entre batterie et volume) — nom + batterie du dispositif connecté
-      (WinRT, classique + BLE). Plusieurs appareils : alternance toutes les ~3 s.
-      Se masque si aucun. Le % de batterie dépend du support du périphérique/pilote.
-
-## v0.6
-
-- [x] **OBS** (au centre, à droite de l'heure) — état d'enregistrement en direct via
-      **obs-websocket v5** (client `ClientWebSocket` natif, handshake + auth SHA256).
-      Inactif : `● REC` blanc fixe. Enregistrement : `● REC` en `#FF3131` clignotant.
-      Reconnexion automatique. Configurer hôte/port/mot de passe dans `BarConfig`.
-
-## v0.5
-
-- [x] **Météo** — wttr.in (JSON `j1`, descriptions en français) pour l'emplacement
-      défini dans `BarConfig.WeatherLocation` (défaut : Montréal). Icône Font Awesome
-      selon les conditions + température ; description et ressenti dans l'infobulle.
-      Rafraîchit toutes les 15 min, conserve la dernière valeur en cas d'échec réseau.
-
-## v0.4
-
-- [x] **Média** — session active du système via WinRT
-      (`GlobalSystemMediaTransportControlsSessionManager`, équivalent MPRIS/playerctl) :
-      icône lecture/pause + titre — artiste. **Clic** = lecture/pause, **molette** =
-      piste suivante/précédente. Se masque quand aucun lecteur n'est actif.
-      (Le TFM passe à `net8.0-windows10.0.19041.0` pour exposer la projection WinRT,
-      toujours sans paquet externe.)
-
-## v0.3
-
-- [x] **Visualiseur audio** (style Cava) — capture **loopback WASAPI** en COM pur,
-      FFT radix-2 maison, 20 bandes logarithmiques (40 Hz → 16 kHz), lissage
-      attaque/chute. Barres en accent `#ddff24`. Thread d'arrière-plan dédié,
-      ré-initialisation automatique au changement de périphérique. Aucune dépendance.
-
-## v0.2
-
-- [x] **Batterie** — `GetSystemPowerStatus`, glyphe Nerd Font par niveau + éclair en
-      charge ; se masque sur un poste fixe sans batterie.
-- [x] **Volume** — Core Audio (COM, sans bibliothèque tierce) : glyphe à trois paliers
-      + pourcentage. **Molette** = ±2 %, **clic gauche** = muet (grisé). Robuste au
-      changement de périphérique (casque branché à chaud).
+- [x] Architecture modulaire (`IBarWidget`) prête pour les widgets.
 
 ---
 
@@ -93,6 +148,7 @@ Disposition complète. Modules optionnels possibles plus tard.
 
 - **.NET 8 SDK** (`dotnet --version` ≥ 8.0) — https://dotnet.microsoft.com/download
 - **JetBrainsMono Nerd Font** installée (sinon repli automatique sur Consolas).
+- *(optionnel)* **OBS** + **obs-websocket v5** pour le module REC.
 
 ---
 
@@ -106,10 +162,36 @@ dotnet run --project BuffBar\BuffBar.csproj -c Release
 ```
 
 Ouverture dans Visual Studio : `BuffBar.sln`.
+L'EXE final : `BuffBar\bin\Release\net8.0-windows10.0.19041.0\BuffBar.exe`.
 
-L'EXE final : `BuffBar\bin\Release\net8.0-windows\BuffBar.exe`.
+**Quitter** : clic droit sur la barre → *Quitter*.
 
-**Quitter** : clic droit sur la barre → *Quitter BuffBar*.
+---
+
+## Installateur
+
+- `make-installer.bat` → publie en **self-contained fichier unique** puis génère
+  `installer\Buffmybar-W26.exe` via **Inno Setup** (installation par-utilisateur,
+  sans droits admin, clé de démarrage auto nettoyée à la désinstallation).
+- Sans aucun outil : `Install-Buffmybar-W26.ps1` (ou son `.bat`), installateur en
+  PowerShell pur.
+- Détails : `INSTALL.md`.
+
+---
+
+## Configuration — `Core/BarConfig.cs`
+
+| Clé                        | Défaut              | Rôle                                                              |
+| -------------------------- | ------------------- | ----------------------------------------------------------------- |
+| `BarHeight`                | `48`                | Hauteur de la barre (DIP).                                        |
+| `EnableAutoStart`          | `true`              | Démarrage automatique avec Windows.                              |
+| `WeatherLocation`          | `"Mascouche, Québec"` | Emplacement météo wttr.in.                                       |
+| `FollowWindowsTheme`       | `true`              | Suivre clair/sombre + accent de Windows.                          |
+| `UseAcrylicBackdrop`       | `true`              | Fond acrylique translucide (repli opaque si non supporté).        |
+| `KeepBuffAccent`           | `true`              | Garder l'accent `#ddff24` même en suivi du thème.                 |
+| `KeepBarOnTop`             | `true`              | Maintenir la barre au-dessus.                                     |
+| `ReclaimFullscreenWindows` | `true`              | Réduire les fenêtres plein écran (non exclusif) sous la barre.    |
+| `ObsHost` / `ObsPort` / `ObsPassword` | `127.0.0.1` / `4455` / `""` | Connexion obs-websocket.                          |
 
 ---
 
@@ -117,22 +199,39 @@ L'EXE final : `BuffBar\bin\Release\net8.0-windows\BuffBar.exe`.
 
 ```
 BuffBar/
-├── App.xaml(.cs)            Instance unique + activation du démarrage auto
-├── MainWindow.xaml(.cs)     Coquille de la barre : régions Gauche/Centre/Droite + cycle AppBar
-├── app.manifest             Conscience DPI PerMonitorV2 (positionnement pixel correct)
+├── App.xaml(.cs)            Instance unique, thème, police, une barre par moniteur
+├── MainWindow.xaml(.cs)     Coquille : régions Gauche/Centre/Droite + cycle AppBar + acrylique
+├── app.manifest             Conscience DPI PerMonitorV2
 ├── Core/
-│   ├── BarConfig.cs         Hauteur, démarrage auto (config centrale)
+│   ├── BarConfig.cs         Configuration centrale (voir tableau ci-dessus)
 │   └── IBarWidget.cs        Contrat des modules
 ├── Interop/
-│   ├── NativeMethods.cs     P/Invoke Win32 (shell32 / user32) — zéro dépendance
-│   └── AppBarManager.cs     Cœur AppBar : ABM_NEW/QUERYPOS/SETPOS/REMOVE, DPI, notifications
+│   ├── NativeMethods.cs     P/Invoke Win32 (shell32 / user32 / dwmapi / shcore)
+│   ├── AppBarManager.cs     Cœur AppBar : ABM_*, DPI par écran, gardien plein écran
+│   ├── CoreAudio.cs         COM Core Audio (volume + capture loopback)
+│   └── PowerNative.cs       État de la batterie
 ├── Services/
-│   └── AutoStartService.cs  Démarrage Windows (HKCU\...\Run)
+│   ├── AutoStartService.cs  Démarrage Windows (HKCU\...\Run)
+│   ├── BackdropService.cs   Fond acrylique DWM
+│   ├── ThemeService.cs      Suivi du thème Windows (clair/sombre + accent)
+│   ├── FontService.cs       Détection de la Nerd Font installée
+│   ├── MonitorService.cs    Énumération des écrans
+│   ├── WeatherService.cs    wttr.in (conditions + prévisions 3 jours)
+│   ├── ObsService.cs        obs-websocket v5
+│   ├── MediaService.cs      Session média WinRT
+│   ├── NetworkService.cs    IP locale / publique
+│   ├── BluetoothService.cs  Appareils Bluetooth (WinRT)
+│   ├── VolumeController.cs   Volume Core Audio
+│   ├── AudioCapture.cs / Fft.cs   Capture WASAPI + FFT
+│   └── Logger.cs            Journal (%LOCALAPPDATA%\BuffBar\buffbar.log)
 ├── Themes/
-│   └── BuffTheme.xaml       Palette, police, style "ModuleBorder" + survol
+│   └── BuffTheme.xaml       Palette, police, styles de module et de flyout
 └── Widgets/
-    └── Clock/
-        ├── ClockWidget.xaml(.cs)   Heure + date centrées
+    ├── Common/              MarqueeText (défilement), HoverPopup (flyout au survol)
+    ├── Clock/               Horloge + CalendarFlyout
+    ├── Weather/             Météo + WeatherFlyout + WeatherIcons
+    ├── Obs/  Media/  Network/  Uptime/
+    ├── Visualizer/  Volume/  Bluetooth/  Battery/
 ```
 
 ### Ajouter un widget
@@ -146,25 +245,35 @@ LeftRegion.Children.Add(new WeatherWidget());
 RightRegion.Children.Add(new BatteryWidget());
 ```
 
-Aucune modification du cœur AppBar n'est nécessaire.
+### Ajouter un flyout au survol
+
+Dans le XAML du module : un `Border x:Name="Root"` + un `Popup x:Name="Flyout"`
+(`StaysOpen="True"`, `AllowsTransparency="True"`) contenant le contenu de l'applet.
+Puis, dans le constructeur :
+
+```csharp
+Widgets.Common.HoverPopup.Attach(Root, Flyout, MonContenu,
+    onOpening: () => { /* rafraîchir le contenu */ },
+    canOpen:   () => /* condition d'ouverture */ true);
+```
 
 ---
 
 ## Multi-écrans
 
-La v1 cale la barre sur l'**écran principal**. Pour une barre par moniteur,
-instanciez une `MainWindow` + un `AppBarManager` par écran (énumération via
-`MonitorFromWindow` / `GetMonitorInfo`, déjà importés dans `NativeMethods`).
-C'est l'évolution prévue dès qu'un premier widget tournera proprement.
+Une barre (AppBar) **par moniteur** : `App` énumère les écrans
+(`MonitorService` → `EnumDisplayMonitors`) et crée une `MainWindow` + un
+`AppBarManager` pour chacun, avec réservation d'espace et facteur DPI calculés par
+écran (`GetDpiForMonitor`). Chaque barre reçoit la disposition complète des modules.
 
 ---
 
 ## Notes techniques
 
-- **DPI** : la hauteur (48 DIP) est convertie en pixels physiques via le facteur
-  d'échelle de l'écran hôte, donc correcte à 100/125/150/175 %.
-- **Plein écran exclusif** : comme la barre des tâches Windows, BuffBar passe
-  derrière une application plein écran (jeu, vidéo) puis se restaure — comportement
-  normal et voulu.
-- **Zéro dépendance** : aucun Electron / Python / processus externe. Uniquement
-  WPF + P/Invoke Win32 du framework.
+- **DPI** : la hauteur (48 DIP) est convertie en pixels physiques selon l'échelle de
+  l'écran hôte — correcte à 100 / 125 / 150 / 175 %.
+- **Acrylique** : le fond de la fenêtre devient transparent (le compositeur DWM rend
+  l'acrylique) ; les flyouts gardent un fond opaque pour rester lisibles.
+- **Plein écran exclusif** : comme la barre des tâches, BuffBar passe derrière une
+  application plein écran exclusif (jeu, vidéo) — comportement normal.
+- **Zéro dépendance** : WPF + P/Invoke Win32 + WinRT du framework, rien d'autre.

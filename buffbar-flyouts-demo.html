@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuffBar — démo flyouts</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --bg:#000; --module:#000; --border:#3A3A3A; --hover:#1E1E1E;
+    --hover-border:#555; --text:#FFF; --subtle:#C8C8C8; --accent:#ddff24;
+    --flyout:#0C0C0C;
+    --font:'JetBrains Mono','Cascadia Code',ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; font-family:var(--font);
+    background:
+      radial-gradient(1200px 600px at 70% 120%, #14210b 0%, transparent 60%),
+      radial-gradient(900px 500px at 10% -20%, #1a1a1a 0%, transparent 55%),
+      #050505;
+    color:var(--text);
+  }
+  /* ---- la barre ---- */
+  .bar{
+    position:sticky; top:0; height:48px; width:100%;
+    display:flex; align-items:stretch;
+    background:rgba(0,0,0,.78); backdrop-filter:blur(14px);
+    border-bottom:1px solid #161616;
+    padding:0 4px; user-select:none;
+  }
+  .region{display:flex; align-items:center}
+  .left{flex:1; justify-content:flex-start}
+  .center{flex:0 0 auto; justify-content:center}
+  .right{flex:1; justify-content:flex-end}
+
+  .module{
+    display:flex; align-items:center; gap:8px;
+    background:var(--module); border:1px solid var(--border);
+    border-radius:6px; padding:2px 12px; margin:6px 4px; height:36px;
+    color:var(--text); font-size:12px; white-space:nowrap;
+    transition:background .12s,border-color .12s;
+  }
+  .module .ico{font-size:13px; line-height:1}
+  .clickable{cursor:pointer}
+  .clickable:hover{background:var(--hover); border-color:var(--hover-border)}
+  .accent{color:var(--accent)}
+  .subtle{color:var(--subtle)}
+
+  .clock{flex-direction:column; gap:0; align-items:center; line-height:1.05; padding:2px 14px}
+  .clock .t{font-size:16px; font-weight:600}
+  .clock .d{font-size:11px; color:var(--subtle)}
+
+  .rec{color:#FF3131}
+  .viz{display:flex; align-items:flex-end; gap:1px; height:20px; margin:0 6px}
+  .viz i{width:3px; background:var(--text); border-radius:1px; animation:eq .9s ease-in-out infinite}
+  @keyframes eq{0%,100%{height:3px}50%{height:18px}}
+
+  /* ---- flyouts ---- */
+  .flyout{
+    position:absolute; top:54px; z-index:50;
+    background:var(--flyout); border:1px solid var(--accent);
+    border-radius:10px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.6);
+    opacity:0; transform:translateY(-6px); pointer-events:none;
+    transition:opacity .14s,transform .14s;
+  }
+  .flyout.open{opacity:1; transform:translateY(0); pointer-events:auto}
+  .flyout h3{margin:0 0 8px; color:var(--accent); font-size:14px; font-weight:600}
+
+  /* calendrier */
+  #cal{width:262px}
+  .cal-head{display:grid; grid-template-columns:28px 1fr 28px; align-items:center; margin-bottom:8px}
+  .cal-head .nav{
+    background:none; border:none; color:var(--accent); font-family:var(--font);
+    font-size:14px; height:28px; border-radius:6px; cursor:pointer;
+  }
+  .cal-head .nav:hover{background:var(--hover)}
+  .cal-title{text-align:center; color:var(--accent); font-weight:600; font-size:14px}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:0}
+  .cal-grid .dow{color:var(--subtle); font-size:11px; text-align:center; padding:2px 0}
+  .cal-grid .day{
+    height:28px; display:flex; align-items:center; justify-content:center;
+    font-size:12px; border-radius:6px; cursor:default;
+  }
+  .cal-grid .day:hover{background:var(--hover)}
+  .cal-grid .today{background:var(--accent); color:#000; font-weight:600}
+  .cal-foot{border-top:1px solid var(--border); margin-top:10px; padding-top:8px;
+            text-align:center; color:var(--subtle); font-size:11px}
+
+  /* météo */
+  #wx{min-width:260px}
+  .wx-cur{display:flex; align-items:center; gap:14px}
+  .wx-cur .big-ico{font-size:34px; color:var(--accent)}
+  .wx-cur .temp{font-size:26px; font-weight:600}
+  .wx-cur .desc{color:var(--subtle); font-size:11px}
+  .wx-det{color:var(--subtle); font-size:11px; margin-top:10px}
+  .wx-sep{border-top:1px solid var(--border); margin:12px 0 10px}
+  .wx-fc{display:grid; grid-template-columns:repeat(3,1fr); text-align:center}
+  .wx-fc .lbl{color:var(--subtle); font-size:11px}
+  .wx-fc .fico{color:var(--accent); font-size:18px; margin:4px 0}
+  .wx-fc .mm{font-size:12px}
+
+  .hint{
+    max-width:640px; margin:48px auto; padding:0 20px; text-align:center;
+    color:var(--subtle); font-size:13px; line-height:1.6;
+  }
+  .hint b{color:var(--accent)}
+  .hint .kbd{border:1px solid var(--border); border-radius:5px; padding:1px 7px; color:var(--text)}
+</style>
+</head>
+<body>
+
+  <div class="bar">
+    <div class="region left">
+      <div class="module clickable" id="weatherMod">
+        <span class="ico"><i class="fa-solid fa-cloud"></i></span><span id="wxTemp">21°C</span>
+      </div>
+      <div class="module"><span class="ico"><i class="fa-regular fa-clock"></i></span><span class="subtle">2j 4h 12m</span></div>
+      <div class="module"><span class="ico"><i class="fa-solid fa-house"></i></span><span>192.168.0.24</span></div>
+      <div class="module"><span class="ico accent"><i class="fa-solid fa-play"></i></span><span class="subtle">Aucune lecture</span></div>
+    </div>
+
+    <div class="region center">
+      <div class="module clock clickable" id="clockMod">
+        <span class="t" id="clkTime">--:--:--</span>
+        <span class="d" id="clkDate">—</span>
+      </div>
+      <div class="module"><span class="rec">●</span><span class="rec">REC</span></div>
+    </div>
+
+    <div class="region right">
+      <div class="module viz" title="visualiseur audio">
+        <!-- 16 barres animées (le vrai en a 64) -->
+        <i style="animation-delay:0s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i>
+        <i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.25s"></i>
+        <i style="animation-delay:.05s"></i><i style="animation-delay:.35s"></i><i style="animation-delay:.2s"></i>
+        <i style="animation-delay:.1s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:0s"></i>
+        <i style="animation-delay:.25s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.35s"></i>
+        <i style="animation-delay:.05s"></i>
+      </div>
+      <div class="module"><span class="ico accent"><i class="fa-solid fa-volume-low"></i></span><span class="accent">8%</span></div>
+      <div class="module"><span class="ico"><i class="fa-brands fa-bluetooth-b"></i></span><span class="subtle">WH-1000XM5 · 90%</span></div>
+      <div class="module"><span class="ico"><i class="fa-solid fa-battery-three-quarters"></i></span><span>76%</span></div>
+    </div>
+  </div>
+
+  <!-- Flyout calendrier -->
+  <div class="flyout" id="cal">
+    <div class="cal-head">
+      <button class="nav" id="calPrev"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="cal-title" id="calTitle">—</div>
+      <button class="nav" id="calNext"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-foot" id="calFoot">—</div>
+  </div>
+
+  <!-- Flyout météo -->
+  <div class="flyout" id="wx">
+    <h3>Mascouche, Québec</h3>
+    <div class="wx-cur">
+      <div class="big-ico"><i class="fa-solid fa-cloud-sun"></i></div>
+      <div>
+        <div class="temp">21°C</div>
+        <div class="desc">Partiellement nuageux</div>
+      </div>
+    </div>
+    <div class="wx-det">Ressenti 20°C&nbsp;&nbsp;·&nbsp;&nbsp;humidité 58%&nbsp;&nbsp;·&nbsp;&nbsp;vent 12 km/h SO</div>
+    <div class="wx-sep"></div>
+    <div class="wx-fc">
+      <div><div class="lbl">Auj.</div><div class="fico"><i class="fa-solid fa-cloud-sun"></i></div><div class="mm">23° / 14°</div></div>
+      <div><div class="lbl">Mar</div><div class="fico"><i class="fa-solid fa-cloud-showers-heavy"></i></div><div class="mm">19° / 12°</div></div>
+      <div><div class="lbl">Mer</div><div class="fico"><i class="fa-solid fa-sun"></i></div><div class="mm">26° / 15°</div></div>
+    </div>
+  </div>
+
+  <div class="hint">
+    Aperçu interactif du concept « flyouts » façon YASB pour BuffBar.<br>
+    Clique sur le module <b>heure</b> pour ouvrir le <b>calendrier</b>, ou sur le module <b>météo</b>
+    pour l'<b>applet de prévisions</b>. Clique ailleurs pour refermer.<br>
+    <span class="subtle" style="font-size:11px">Esthétique buff : <span class="kbd">#000000</span> · accent <span class="kbd accent">#ddff24</span> · JetBrains&nbsp;Mono · icônes Font&nbsp;Awesome.</span>
+  </div>
+
+<script>
+  const frDays = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const frMonths = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+  // ---- Horloge ----
+  function tick(){
+    const n=new Date();
+    const p=x=>String(x).padStart(2,'0');
+    document.getElementById('clkTime').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+    document.getElementById('clkDate').textContent=cap(`${frDays[n.getDay()]} ${n.getDate()} ${frMonths[n.getMonth()]} ${n.getFullYear()}`);
+  }
+  tick(); setInterval(tick,1000);
+
+  // ---- Calendrier ----
+  let shown = new Date(); shown.setDate(1);
+  function buildCal(){
+    const grid=document.getElementById('calGrid');
+    grid.innerHTML='';
+    ['lu','ma','me','je','ve','sa','di'].forEach(d=>{
+      const e=document.createElement('div'); e.className='dow'; e.textContent=d; grid.appendChild(e);
+    });
+    const y=shown.getFullYear(), m=shown.getMonth();
+    document.getElementById('calTitle').textContent=cap(`${frMonths[m]} ${y}`);
+    const first=new Date(y,m,1);
+    const offset=(first.getDay()+6)%7;            // lundi = 0
+    const dim=new Date(y,m+1,0).getDate();
+    for(let i=0;i<offset;i++){const e=document.createElement('div');e.className='day';grid.appendChild(e);}
+    const t=new Date();
+    for(let d=1;d<=dim;d++){
+      const e=document.createElement('div'); e.className='day'; e.textContent=d;
+      if(d===t.getDate()&&m===t.getMonth()&&y===t.getFullYear()) e.classList.add('today');
+      grid.appendChild(e);
+    }
+    const now=new Date();
+    document.getElementById('calFoot').textContent=cap(`${frDays[now.getDay()]} ${now.getDate()} ${frMonths[now.getMonth()]} ${now.getFullYear()}`);
+  }
+  document.getElementById('calPrev').onclick=e=>{e.stopPropagation();shown.setMonth(shown.getMonth()-1);buildCal();};
+  document.getElementById('calNext').onclick=e=>{e.stopPropagation();shown.setMonth(shown.getMonth()+1);buildCal();};
+
+  // ---- Ouverture / fermeture des flyouts ----
+  const cal=document.getElementById('cal'), wx=document.getElementById('wx');
+  const clockMod=document.getElementById('clockMod'), weatherMod=document.getElementById('weatherMod');
+
+  function place(flyout, target, align){
+    const r=target.getBoundingClientRect();
+    flyout.style.top=(r.bottom+6)+'px';
+    if(align==='center'){
+      flyout.style.left=(r.left+r.width/2-flyout.offsetWidth/2)+'px';
+    }else{
+      flyout.style.left=Math.max(8,r.left)+'px';
+    }
+  }
+  function toggle(flyout, target, align){
+    const other = flyout===cal?wx:cal;
+    other.classList.remove('open');
+    const willOpen=!flyout.classList.contains('open');
+    if(willOpen){ if(flyout===cal){shown=new Date();shown.setDate(1);buildCal();} flyout.classList.add('open'); place(flyout,target,align); }
+    else flyout.classList.remove('open');
+  }
+  clockMod.onclick=e=>{e.stopPropagation();toggle(cal,clockMod,'center');};
+  weatherMod.onclick=e=>{e.stopPropagation();toggle(wx,weatherMod,'left');};
+  cal.onclick=e=>e.stopPropagation();
+  wx.onclick=e=>e.stopPropagation();
+  document.addEventListener('click',()=>{cal.classList.remove('open');wx.classList.remove('open');});
+  window.addEventListener('resize',()=>{
+    if(cal.classList.contains('open'))place(cal,clockMod,'center');
+    if(wx.classList.contains('open'))place(wx,weatherMod,'left');
+  });
+
+  buildCal();
+</script>
+</body>
+</html>
