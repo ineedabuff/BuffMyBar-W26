@@ -23,6 +23,19 @@ public sealed class ObsConfig
 }
 
 /// <summary>
+/// Intégration Google Agenda (lecture seule). Les identifiants OAuth « Desktop »
+/// se créent dans Google Cloud Console ; les jetons sont stockés à part
+/// (google_token.json), jamais dans settings.json.
+/// </summary>
+public sealed class GoogleCalendarConfig
+{
+    public bool Enabled { get; set; } = false;
+    public string ClientId { get; set; } = "";
+    public string ClientSecret { get; set; } = "";
+    public int MaxEvents { get; set; } = 50;
+}
+
+/// <summary>
 /// Configuration de BuffMyBar, sérialisée en JSON dans
 /// %AppData%\BuffMyBar-W26\settings.json (façon Waybar, mais éditable aussi par
 /// la fenêtre Paramètres).
@@ -49,4 +62,5 @@ public sealed class Config
 
     public WidgetToggles Widgets { get; set; } = new();
     public ObsConfig Obs { get; set; } = new();
+    public GoogleCalendarConfig GoogleCalendar { get; set; } = new();
 }

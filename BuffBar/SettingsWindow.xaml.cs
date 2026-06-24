@@ -45,6 +45,51 @@ public partial class SettingsWindow : Window
         ObsHostBox.Text = c.Obs.Host;
         ObsPortBox.Text = c.Obs.Port.ToString(CultureInfo.InvariantCulture);
         ObsPassBox.Text = c.Obs.Password;
+
+        GoogleEnabled.IsChecked = c.GoogleCalendar.Enabled;
+        GoogleClientId.Text = c.GoogleCalendar.ClientId;
+        GoogleClientSecret.Text = c.GoogleCalendar.ClientSecret;
+        UpdateGoogleStatus();
+    }
+
+    private void UpdateGoogleStatus()
+    {
+        bool connected = GoogleCalendarService.IsConnected;
+        GoogleStatus.Text = connected ? "✔ Connecté" : "Non connecté";
+        GoogleStatus.Foreground = new System.Windows.Media.SolidColorBrush(
+            connected ? System.Windows.Media.Color.FromRgb(0xDD, 0xFF, 0x24)
+                      : System.Windows.Media.Color.FromRgb(0x90, 0x90, 0x90));
+    }
+
+    private async void OnGoogleConnect(object sender, RoutedEventArgs e)
+    {
+        // Persiste d'abord les identifiants (pour que le rafraîchissement du jeton fonctionne).
+        Config c = ConfigService.Current;
+        c.GoogleCalendar.Enabled = GoogleEnabled.IsChecked == true;
+        c.GoogleCalendar.ClientId = GoogleClientId.Text.Trim();
+        c.GoogleCalendar.ClientSecret = GoogleClientSecret.Text.Trim();
+        ConfigService.Save(c);
+
+        if (string.IsNullOrWhiteSpace(c.GoogleCalendar.ClientId))
+        {
+            GoogleStatus.Text = "Client ID requis";
+            return;
+        }
+
+        GoogleConnectButton.IsEnabled = false;
+        GoogleStatus.Text = "Connexion… (voir le navigateur)";
+        bool ok = await GoogleCalendarService.ConnectAsync(
+            c.GoogleCalendar.ClientId, c.GoogleCalendar.ClientSecret);
+        GoogleConnectButton.IsEnabled = true;
+
+        if (!ok) GoogleStatus.Text = "Échec de la connexion";
+        else UpdateGoogleStatus();
+    }
+
+    private void OnGoogleDisconnect(object sender, RoutedEventArgs e)
+    {
+        GoogleCalendarService.Disconnect();
+        UpdateGoogleStatus();
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
@@ -76,6 +121,13 @@ public partial class SettingsWindow : Window
                 Host = string.IsNullOrWhiteSpace(ObsHostBox.Text) ? "127.0.0.1" : ObsHostBox.Text.Trim(),
                 Port = (int)ParseDouble(ObsPortBox.Text, 4455, 1, 65535),
                 Password = ObsPassBox.Text
+            },
+            GoogleCalendar = new GoogleCalendarConfig
+            {
+                Enabled = GoogleEnabled.IsChecked == true,
+                ClientId = GoogleClientId.Text.Trim(),
+                ClientSecret = GoogleClientSecret.Text.Trim(),
+                MaxEvents = ConfigService.Current.GoogleCalendar.MaxEvents
             }
         };
 
