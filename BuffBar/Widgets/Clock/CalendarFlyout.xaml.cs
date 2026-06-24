@@ -168,13 +168,27 @@ public partial class CalendarFlyout : UserControl
         if (generation != _generation) return;   // mois changé entre-temps
 
         _eventsByDay.Clear();
+        var monthStart = new DateTime(_shown.Year, _shown.Month, 1);
+        DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
         foreach (CalEvent e in events)
         {
-            int day = e.Start.Day;
-            if (e.Start.Year != _shown.Year || e.Start.Month != _shown.Month) continue;
-            if (!_eventsByDay.TryGetValue(day, out var list))
-                _eventsByDay[day] = list = new List<CalEvent>();
-            list.Add(e);
+            DateTime first = e.Start.Date;
+            DateTime last = first;
+            if (e.End > e.Start)
+                last = e.AllDay ? e.End.Date.AddDays(-1) : e.End.Date;   // fin all-day = exclusive
+            if (last < first) last = first;
+
+            if (first < monthStart) first = monthStart;
+            if (last > monthEnd) last = monthEnd;
+
+            for (DateTime d = first; d <= last; d = d.AddDays(1))
+            {
+                if (d.Month != _shown.Month) continue;
+                if (!_eventsByDay.TryGetValue(d.Day, out var list))
+                    _eventsByDay[d.Day] = list = new List<CalEvent>();
+                list.Add(e);
+            }
         }
 
         MarkDots();

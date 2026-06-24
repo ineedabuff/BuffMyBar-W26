@@ -154,8 +154,8 @@ dessus dans `settings.json` pour un thème maison.
 
 ### Google Agenda (optionnel)
 
-Le flyout de l'horloge peut afficher tes événements (lecture seule, agenda
-principal). Mise en place, une seule fois :
+Le flyout de l'horloge peut afficher tes événements (lecture seule, tous tes
+agendas). Mise en place, une seule fois :
 
 1. **Google Cloud Console** : crée un projet et active l'**API Google Calendar**.
 2. Crée des identifiants OAuth de type **Application de bureau** → tu obtiens un
@@ -448,7 +448,7 @@ Edit it by hand **or** through the *Settings* window (right-click → *Settings�
 
 ### Google Calendar (optional)
 
-The clock flyout can show your events (read-only, primary calendar). One-time setup:
+The clock flyout can show your events (read-only, all your calendars). One-time setup:
 
 1. **Google Cloud Console**: create a project and enable the **Google Calendar API**.
 2. Create **Desktop app** OAuth credentials → you get a **Client ID** and a

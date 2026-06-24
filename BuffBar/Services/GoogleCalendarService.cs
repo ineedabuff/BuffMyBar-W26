@@ -183,7 +183,7 @@ public static class GoogleCalendarService
 
     // ---------------------------------------------------------------- Events
 
-    /// <summary>Événements de l'agenda principal entre deux dates locales.</summary>
+    /// <summary>Événements de TOUS les agendas visibles, entre deux dates locales.</summary>
     public static async Task<List<CalEvent>> GetEventsAsync(
         string clientId, string clientSecret, DateTime fromLocal, DateTime toLocal, int maxEvents)
     {
@@ -194,32 +194,95 @@ public static class GoogleCalendarService
 
         string timeMin = new DateTimeOffset(fromLocal).ToString("yyyy-MM-ddTHH:mm:sszzz");
         string timeMax = new DateTimeOffset(toLocal).ToString("yyyy-MM-ddTHH:mm:sszzz");
+        int pageSize = Math.Clamp(maxEvents <= 0 ? 250 : maxEvents, 50, 250);
 
-        string url = $"{ApiBase}/calendars/primary/events" +
-                     $"?singleEvents=true&orderBy=startTime&maxResults={maxEvents}" +
-                     $"&timeMin={Uri.EscapeDataString(timeMin)}&timeMax={Uri.EscapeDataString(timeMax)}";
+        foreach (string calId in await GetCalendarIdsAsync(access))
+        {
+            string? pageToken = null;
+            do
+            {
+                string url = $"{ApiBase}/calendars/{Uri.EscapeDataString(calId)}/events" +
+                             $"?singleEvents=true&orderBy=startTime&maxResults={pageSize}" +
+                             $"&timeMin={Uri.EscapeDataString(timeMin)}&timeMax={Uri.EscapeDataString(timeMax)}";
+                if (pageToken != null) url += "&pageToken=" + Uri.EscapeDataString(pageToken);
 
+                JsonDocument? doc = await GetJsonAsync(url, access);
+                if (doc == null) break;
+
+                using (doc)
+                {
+                    JsonElement root = doc.RootElement;
+                    if (root.TryGetProperty("items", out var items))
+                    {
+                        foreach (JsonElement it in items.EnumerateArray())
+                        {
+                            // Ignore les invitations refusées.
+                            if (IsDeclined(it)) continue;
+                            string title = Str(it, "summary") ?? "(sans titre)";
+                            (DateTime start, bool allDay) = ParseWhen(it, "start");
+                            (DateTime end, _) = ParseWhen(it, "end");
+                            events.Add(new CalEvent(start, end, title, allDay));
+                        }
+                    }
+                    pageToken = root.TryGetProperty("nextPageToken", out var nt) ? nt.GetString() : null;
+                }
+            }
+            while (!string.IsNullOrEmpty(pageToken));
+        }
+
+        return events;
+    }
+
+    /// <summary>Identifiants de tous les agendas non masqués (repli : primary).</summary>
+    private static async Task<List<string>> GetCalendarIdsAsync(string access)
+    {
+        var ids = new List<string>();
+        try
+        {
+            JsonDocument? doc = await GetJsonAsync($"{ApiBase}/users/me/calendarList", access);
+            if (doc != null)
+                using (doc)
+                {
+                    if (doc.RootElement.TryGetProperty("items", out var items))
+                        foreach (JsonElement it in items.EnumerateArray())
+                        {
+                            if (it.TryGetProperty("hidden", out var h) && h.ValueKind == JsonValueKind.True)
+                                continue;
+                            string? id = Str(it, "id");
+                            if (!string.IsNullOrEmpty(id)) ids.Add(id!);
+                        }
+                }
+        }
+        catch { /* repli ci-dessous */ }
+
+        if (ids.Count == 0) ids.Add("primary");
+        return ids;
+    }
+
+    private static async Task<JsonDocument?> GetJsonAsync(string url, string access)
+    {
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Add("Authorization", "Bearer " + access);
             using var resp = await Http.SendAsync(req);
-            if (!resp.IsSuccessStatusCode) return events;
-
-            using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-            if (!doc.RootElement.TryGetProperty("items", out var items)) return events;
-
-            foreach (JsonElement it in items.EnumerateArray())
-            {
-                string title = Str(it, "summary") ?? "(sans titre)";
-                (DateTime start, bool allDay) = ParseWhen(it, "start");
-                (DateTime end, _) = ParseWhen(it, "end");
-                events.Add(new CalEvent(start, end, title, allDay));
-            }
+            if (!resp.IsSuccessStatusCode) return null;
+            return JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         }
-        catch { /* renvoie ce qu'on a */ }
+        catch
+        {
+            return null;
+        }
+    }
 
-        return events;
+    private static bool IsDeclined(JsonElement item)
+    {
+        if (!item.TryGetProperty("attendees", out var att) || att.ValueKind != JsonValueKind.Array)
+            return false;
+        foreach (JsonElement a in att.EnumerateArray())
+            if (a.TryGetProperty("self", out var self) && self.ValueKind == JsonValueKind.True)
+                return Str(a, "responseStatus") == "declined";
+        return false;
     }
 
     private static (DateTime, bool) ParseWhen(JsonElement item, string node)
