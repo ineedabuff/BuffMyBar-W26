@@ -9,6 +9,10 @@ Esthétique « buff » : fond noir `#000000`, texte blanc, accent vert-jaune
 **suivre les couleurs de Windows 11** (clair/sombre + accentuation) et afficher un
 **fond acrylique translucide** comme la barre des tâches.
 
+Tout est **configurable par JSON** (`settings.json`, façon Waybar) **et** par une
+**fenêtre Paramètres** (clic droit → *Paramètres…*) : thème, hauteur, ville météo,
+mode jeu, OBS, et activation de chaque widget.
+
 > **Zéro dépendance** : aucun Electron / Python / processus externe. Uniquement
 > WPF + P/Invoke Win32 + projection WinRT, tout du framework.
 
@@ -31,7 +35,24 @@ Au **survol** : pointer l'**heure** ouvre le calendrier, pointer la **météo** 
 
 ## Historique des versions
 
-### v1.6 — Accent inversé sur le moniteur externe *(version actuelle)*
+### v2.0 — Configuration JSON + fenêtre Paramètres *(version actuelle)*
+
+- [x] **`settings.json`** (façon Waybar) sous `%AppData%\BuffMyBar-W26\` : thème,
+      hauteur, ville météo, mode jeu, acrylique, accent externe, OBS et activation
+      par widget. Créé automatiquement au premier lancement.
+- [x] **Thèmes en fichiers** `themes\*.json` (`buff`, `windows`, `cyber`) — palette
+      éditable ; `windows.json` suit le thème du système. Ajoute ton propre `.json`
+      pour un thème maison.
+- [x] **Fenêtre Paramètres** (clic droit → *Paramètres…*) : thème, hauteur, ville,
+      mode jeu, acrylique, accent externe, **cases d'activation par widget** et
+      réglages **OBS** (hôte/port/mot de passe). Application en direct à l'enregistrement.
+- [x] **Mode jeu** : ajoute la **latence (ping)** en tête du widget réseau, colorée
+      selon le niveau.
+- [x] **Widgets activables/désactivables** ; **hauteur**, **météo** et **OBS**
+      entièrement configurables.
+- [x] Le système de réglages par registre est remplacé par le JSON (source unique).
+
+### v1.6 — Accent inversé sur le moniteur externe
 
 - [x] **Option « Moniteur externe : fond accent #ddff24 »** (clic droit →
       *Couleurs de la barre*). Sur l'écran **externe** uniquement : fond de barre
@@ -200,16 +221,18 @@ L'EXE final : `BuffBar\bin\Release\net8.0-windows10.0.19041.0\BuffBar.exe`.
 
 ## Menu contextuel (clic droit sur la barre)
 
+- **Paramètres…** — ouvre la fenêtre de configuration.
 - **Couleurs de la barre**
-  - *Suivre Windows (barre des tâches)* — clair/sombre + accent du système.
-  - *Buff — noir #000000 / accent #ddff24* — palette signature forcée.
+  - *Buff — noir #000000 / accent #ddff24* — palette signature.
+  - *Windows (barre des tâches)* — clair/sombre + accent du système.
+  - *Cyber* — palette cyan/sombre.
   - *Moniteur externe : fond accent #ddff24* — accent inversé sur l'écran externe
     (fond accent, widgets noirs, texte/icônes en accent).
 - **Recharger la position** — recalcule la position de la barre courante.
 - **Redémarrer la barre** — reconstruit toutes les barres (après veille / écran éteint).
-- **Quitter** — ferme BuffBar (seule sortie ; pas d'entrée dans la barre des tâches).
+- **Quitter** — ferme l'application (seule sortie ; pas d'entrée dans la barre des tâches).
 
-Ces choix sont **mémorisés** d'un lancement à l'autre (registre, voir ci-dessous).
+Tous ces choix sont **enregistrés dans `settings.json`** (voir ci-dessous).
 
 ---
 
@@ -224,30 +247,78 @@ Ces choix sont **mémorisés** d'un lancement à l'autre (registre, voir ci-dess
 
 ---
 
-## Configuration — `Core/BarConfig.cs`
+## Configuration
 
-| Clé                        | Défaut              | Rôle                                                              |
-| -------------------------- | ------------------- | ----------------------------------------------------------------- |
-| `BarHeight`                | `48`                | Hauteur de la barre (DIP).                                        |
-| `EnableAutoStart`          | `true`              | Démarrage automatique avec Windows.                              |
-| `WeatherLocation`          | `"Mascouche, Québec"` | Emplacement météo wttr.in.                                       |
-| `FollowWindowsTheme`       | `true`              | Suivre clair/sombre + accent de Windows.                          |
-| `UseAcrylicBackdrop`       | `true`              | Fond acrylique translucide (repli opaque si non supporté).        |
-| `KeepBuffAccent`           | `true`              | Garder l'accent `#ddff24` même en suivi du thème.                 |
-| `KeepBarOnTop`             | `true`              | Maintenir la barre au-dessus.                                     |
-| `ReclaimFullscreenWindows` | `true`              | Réduire les fenêtres plein écran (non exclusif) sous la barre.    |
-| `ObsHost` / `ObsPort` / `ObsPassword` | `127.0.0.1` / `4455` / `""` | Connexion obs-websocket.                          |
+Toute la configuration vit sous `%AppData%\BuffMyBar-W26\`, créée au premier lancement :
 
-> `FollowWindowsTheme`, `UseAcrylicBackdrop` et `KeepBuffAccent` servent de
-> **valeurs par défaut au premier lancement**. Ensuite, ce sont les choix du menu
-> contextuel qui priment.
+```
+%AppData%\BuffMyBar-W26\
+├── settings.json
+├── themes\
+│   ├── buff.json
+│   ├── windows.json
+│   └── cyber.json
+└── logs\
+    └── buffbar.log
+```
 
-### Réglages persistants — `HKCU\Software\BuffBar` (`SettingsService`)
+Éditable à la main **ou** par la fenêtre *Paramètres* (clic droit → *Paramètres…*).
 
-| Valeur          | Contenu                                              |
-| --------------- | ---------------------------------------------------- |
-| `ThemeMode`     | `Windows` ou `Buff` (sélecteur de couleurs).         |
-| `ExternalAccent`| `1` / `0` (accent inversé sur le moniteur externe).  |
+### `settings.json`
+
+```json
+{
+  "theme": "buff",
+  "height": 36,
+  "weatherCity": "Terrebonne",
+  "gamingMode": false,
+  "externalAccent": false,
+  "acrylic": true,
+  "widgets": {
+    "weather": true,
+    "uptime": true,
+    "network": true,
+    "media": true,
+    "obs": true,
+    "visualizer": true,
+    "volume": true,
+    "bluetooth": true,
+    "battery": true
+  },
+  "obs": { "host": "127.0.0.1", "port": 4455, "password": "" }
+}
+```
+
+| Clé              | Rôle                                                                 |
+| ---------------- | ------------------------------------------------------------------- |
+| `theme`          | `buff` \| `windows` \| `cyber` (= `themes\<nom>.json`).             |
+| `height`         | Hauteur de la barre en DIP.                                          |
+| `weatherCity`    | Ville pour la météo (wttr.in).                                       |
+| `gamingMode`     | Ajoute la latence (ping) au widget réseau.                          |
+| `externalAccent` | Accent inversé `#ddff24` sur le moniteur externe.                   |
+| `acrylic`        | Fond acrylique translucide (repli opaque si non supporté).          |
+| `widgets`        | Activation de chaque module.                                         |
+| `obs`            | Connexion obs-websocket (hôte / port / mot de passe).               |
+
+### Thèmes — `themes\<nom>.json`
+
+```json
+{
+  "followWindows": false,
+  "barBackground":   "#000000",
+  "moduleBackground":"#000000",
+  "moduleBorder":    "#3A3A3A",
+  "hoverBackground": "#1E1E1E",
+  "hoverBorder":     "#555555",
+  "primaryText":     "#FFFFFF",
+  "subtleText":      "#C8C8C8",
+  "accent":          "#DDFF24"
+}
+```
+
+`"followWindows": true` ignore les couleurs et suit le thème de Windows
+(`windows.json`). Crée un nouveau fichier dans `themes\` puis pointe `theme`
+dessus dans `settings.json` pour un thème maison.
 
 ---
 
@@ -255,11 +326,14 @@ Ces choix sont **mémorisés** d'un lancement à l'autre (registre, voir ci-dess
 
 ```
 BuffBar/
-├── App.xaml(.cs)            Instance unique, thème, police, une barre par moniteur
-├── MainWindow.xaml(.cs)     Coquille : régions Gauche/Centre/Droite + cycle AppBar + acrylique
+├── App.xaml(.cs)            Instance unique, config, thème, une barre par moniteur
+├── MainWindow.xaml(.cs)     Coquille : régions G/C/D + AppBar + acrylique + menu contextuel
+├── SettingsWindow.xaml(.cs) Fenêtre Paramètres (édite settings.json, applique en direct)
 ├── app.manifest             Conscience DPI PerMonitorV2
 ├── Core/
-│   ├── BarConfig.cs         Configuration centrale (voir tableau ci-dessus)
+│   ├── Config.cs            Modèle settings.json (thème, hauteur, widgets, OBS…)
+│   ├── ThemePalette.cs      Modèle d'un thème (themes\<nom>.json)
+│   ├── BarConfig.cs         Accès centralisé (délègue à ConfigService.Current)
 │   └── IBarWidget.cs        Contrat des modules
 ├── Interop/
 │   ├── NativeMethods.cs     P/Invoke Win32 (shell32 / user32 / dwmapi / shcore)
@@ -267,10 +341,10 @@ BuffBar/
 │   ├── CoreAudio.cs         COM Core Audio (volume + capture loopback)
 │   └── PowerNative.cs       État de la batterie
 ├── Services/
+│   ├── ConfigService.cs     Charge/enregistre settings.json + thèmes (JSON natif)
 │   ├── AutoStartService.cs  Démarrage Windows (HKCU\...\Run)
 │   ├── BackdropService.cs   Fond acrylique DWM
-│   ├── ThemeService.cs      Suivi du thème Windows (clair/sombre + accent) + mode Buff
-│   ├── SettingsService.cs   Réglages persistants (registre) : mode couleurs, accent externe
+│   ├── ThemeService.cs      Applique le thème (buff/cyber) ou suit Windows
 │   ├── FontService.cs       Détection de la Nerd Font installée
 │   ├── MonitorService.cs    Énumération des écrans
 │   ├── WeatherService.cs    wttr.in (conditions + prévisions 3 jours)
@@ -280,7 +354,7 @@ BuffBar/
 │   ├── BluetoothService.cs  Appareils Bluetooth (WinRT)
 │   ├── VolumeController.cs   Volume Core Audio
 │   ├── AudioCapture.cs / Fft.cs   Capture WASAPI + FFT
-│   └── Logger.cs            Journal (%LOCALAPPDATA%\BuffBar\buffbar.log)
+│   └── Logger.cs            Journal (%AppData%\BuffMyBar-W26\logs\buffbar.log)
 ├── Themes/
 │   └── BuffTheme.xaml       Palette, police, styles de module et de flyout
 └── Widgets/

@@ -1,8 +1,10 @@
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using BuffBar.Core;
 
 namespace BuffBar.Services;
 
@@ -24,16 +26,12 @@ public static class ThemeService
     private static DispatcherTimer? _timer;
     private static string _signature = string.Empty;
 
-    /// <summary>Mode de couleurs courant (suivi Windows ou buff forcé).</summary>
-    public static ThemeMode Mode { get; private set; } = ThemeMode.FollowWindows;
-
     /// <summary>Vrai quand un fond acrylique translucide est actif (voir BackdropService).</summary>
     public static bool AcrylicActive { get; private set; }
 
     /// <summary>
     /// Active le mode acrylique : les fonds Bar/Module deviennent transparents
     /// (l'acrylique du système transparaît) et le survol passe en translucide.
-    /// Appelé par BackdropService une fois le fond DWM appliqué.
     /// </summary>
     public static void EnableAcrylic()
     {
@@ -41,53 +39,63 @@ public static class ThemeService
         ApplyAcrylicBackgrounds();
     }
 
-    /// <summary>
-    /// Force les fonds translucides du mode acrylique. Idempotent : appelé une
-    /// fois à l'activation, puis à chaque sondage si le suivi du thème est actif.
-    /// </summary>
     private static void ApplyAcrylicBackgrounds()
     {
         bool light = ReadDword(PersonalizeKey, "SystemUsesLightTheme", 0) == 1;
 
-        // Fonds transparents -> l'acrylique du système est visible à travers.
         SetArgb("BarBackground", 0x00, 0x00, 0x00, 0x00);
         SetArgb("ModuleBackground", 0x00, 0x00, 0x00, 0x00);
 
-        // Survol translucide léger (sombre sur fond clair, clair sur fond sombre),
-        // comme la surbrillance de la barre des tâches.
         if (light)
             SetArgb("HoverBackground", 0x18, 0x00, 0x00, 0x00);
         else
             SetArgb("HoverBackground", 0x22, 0xFF, 0xFF, 0xFF);
     }
 
-    public static void Start()
-    {
-        Mode = SettingsService.GetThemeMode(defaultFollow: BarConfig.FollowWindowsTheme);
-        ApplyMode();
-    }
+    /// <summary>Point d'entrée au démarrage : applique le thème de la config.</summary>
+    public static void Start() => ApplyConfigTheme();
 
-    /// <summary>Change le mode de couleurs, l'applique en direct et le mémorise.</summary>
-    public static void SetMode(ThemeMode mode)
+    /// <summary>Applique le thème nommé dans la config (buff / cyber / windows).</summary>
+    public static void ApplyConfigTheme()
     {
-        if (mode == Mode) return;
-        Mode = mode;
-        SettingsService.SetThemeMode(mode);
-        ApplyMode();
-    }
-
-    private static void ApplyMode()
-    {
-        if (Mode == ThemeMode.FollowWindows)
+        ThemePalette p = ConfigService.LoadTheme(ConfigService.Current.Theme);
+        if (p.FollowWindows)
         {
             StartPolling();
-            Apply(force: true);
+            Apply(force: true);        // suit Windows en direct
         }
         else
         {
             StopPolling();
-            ApplyBuff();
+            ApplyPalette(p);           // palette explicite (buff, cyber, ...)
         }
+    }
+
+    /// <summary>Change le thème, l'enregistre et l'applique en direct.</summary>
+    public static void SetTheme(string name)
+    {
+        Config c = ConfigService.Current;
+        if (c.Theme == name) return;
+        c.Theme = name;
+        ConfigService.Save(c);
+        ApplyConfigTheme();
+    }
+
+    private static void ApplyPalette(ThemePalette p)
+    {
+        _signature = string.Empty;   // pour forcer un nouvel Apply si on revient à « windows »
+
+        Set("BarBackground", Hex(p.BarBackground));
+        Set("ModuleBackground", Hex(p.ModuleBackground));
+        Set("ModuleBorderBrush", Hex(p.ModuleBorder));
+        Set("HoverBackground", Hex(p.HoverBackground));
+        Set("HoverBorderBrush", Hex(p.HoverBorder));
+        Set("PrimaryText", Hex(p.PrimaryText));
+        Set("SubtleText", Hex(p.SubtleText));
+        Set("AccentBrush", Hex(p.Accent));
+
+        if (AcrylicActive)
+            ApplyAcrylicBackgrounds();
     }
 
     private static void StartPolling()
@@ -99,7 +107,8 @@ public static class ThemeService
         };
         _timer.Tick += (_, _) =>
         {
-            if (Mode == ThemeMode.FollowWindows) Apply(force: false);
+            if (ConfigService.LoadTheme(ConfigService.Current.Theme).FollowWindows)
+                Apply(force: false);
         };
         _timer.Start();
     }
@@ -108,30 +117,6 @@ public static class ThemeService
     {
         _timer?.Stop();
         _timer = null;
-    }
-
-    /// <summary>Force la palette buff : fond #000000, accent #ddff24, texte blanc.</summary>
-    private static void ApplyBuff()
-    {
-        _signature = string.Empty;  // pour forcer un nouvel Apply si on revient au suivi
-
-        Set("ModuleBorderBrush", Rgb(0x3A, 0x3A, 0x3A));
-        Set("HoverBorderBrush", Rgb(0x55, 0x55, 0x55));
-        Set("PrimaryText", Rgb(0xFF, 0xFF, 0xFF));
-        Set("SubtleText", Rgb(0xC8, 0xC8, 0xC8));
-        Set("AccentBrush", Rgb(0xDD, 0xFF, 0x24));
-
-        if (AcrylicActive)
-        {
-            // Acrylique : fonds transparents + survol translucide.
-            ApplyAcrylicBackgrounds();
-        }
-        else
-        {
-            Set("BarBackground", Rgb(0x00, 0x00, 0x00));
-            Set("ModuleBackground", Rgb(0x00, 0x00, 0x00));
-            Set("HoverBackground", Rgb(0x1E, 0x1E, 0x1E));
-        }
     }
 
     private static void Apply(bool force)
@@ -253,6 +238,28 @@ public static class ThemeService
     // ---- Utilitaires couleur ----
 
     private static Color Rgb(int r, int g, int b) => Color.FromRgb((byte)r, (byte)g, (byte)b);
+
+    /// <summary>Convertit "#RRGGBB" ou "#AARRGGBB" en Color (repli : magenta visible).</summary>
+    private static Color Hex(string s)
+    {
+        try
+        {
+            string h = s.TrimStart('#');
+            if (h.Length == 6)
+                return Color.FromRgb(
+                    byte.Parse(h.Substring(0, 2), NumberStyles.HexNumber),
+                    byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
+                    byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber));
+            if (h.Length == 8)
+                return Color.FromArgb(
+                    byte.Parse(h.Substring(0, 2), NumberStyles.HexNumber),
+                    byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
+                    byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber),
+                    byte.Parse(h.Substring(6, 2), NumberStyles.HexNumber));
+        }
+        catch { /* repli ci-dessous */ }
+        return Color.FromRgb(0xFF, 0x00, 0xFF);
+    }
     private static double Lum(Color c) => (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) / 255.0;
     private static Color Scale(Color c, float f) => Rgb(Cl(c.R * f), Cl(c.G * f), Cl(c.B * f));
     private static Color Lighten(Color c, float t) => Blend(c, Rgb(0xFF, 0xFF, 0xFF), t);

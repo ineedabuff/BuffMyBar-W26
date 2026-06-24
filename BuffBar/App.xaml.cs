@@ -25,6 +25,9 @@ public partial class App : Application
             return;
         }
 
+        // Charge la configuration (settings.json) AVANT tout le reste.
+        ConfigService.Initialize();
+
         // Résout la police Nerd Font installée AVANT le chargement des fenêtres.
         Logger.Log($"App: démarrage. Journal : {Logger.LogPath}");
         FontService.Apply();
@@ -120,6 +123,13 @@ public partial class App : Application
     {
         foreach (MainWindow bar in _bars)
             bar.RefreshExternalAccent();
+    }
+
+    /// <summary>Réapplique le thème puis reconstruit les barres (après changement de config).</summary>
+    public void ApplyConfigAndRestart()
+    {
+        ThemeService.ApplyConfigTheme();
+        RestartBars();
     }
 
     protected override void OnExit(ExitEventArgs e)

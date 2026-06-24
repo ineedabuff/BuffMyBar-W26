@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -64,5 +65,20 @@ public sealed class NetworkService
             catch { /* service suivant */ }
         }
         return null;
+    }
+
+    /// <summary>Latence (ms) vers un hôte ; -1 si échec/timeout. Pour le mode jeu.</summary>
+    public static async Task<long> PingAsync(string host = "1.1.1.1")
+    {
+        try
+        {
+            using var ping = new Ping();
+            PingReply r = await ping.SendPingAsync(host, 1000);
+            return r.Status == IPStatus.Success ? r.RoundtripTime : -1;
+        }
+        catch
+        {
+            return -1;
+        }
     }
 }

@@ -20,12 +20,12 @@ public static class Logger
         try
         {
             string dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BuffBar");
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "BuffMyBar-W26", "logs");
             Directory.CreateDirectory(dir);
             string path = Path.Combine(dir, "buffbar.log");
             File.WriteAllText(path,
-                $"=== BuffBar — {DateTime.Now:yyyy-MM-dd HH:mm:ss} ==={Environment.NewLine}");
+                $"=== BuffMyBar — {DateTime.Now:yyyy-MM-dd HH:mm:ss} ==={Environment.NewLine}");
             return path;
         }
         catch

@@ -1523,3 +1523,5 @@ D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\B
 D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\BuffBar.csproj.Up2Date
 D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\BuffBar.genruntimeconfig.cache
 D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\ref\BuffBar.dll
+D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\SettingsWindow.baml
+D:\Github\BuffMyBar-W26\BuffBar\obj\Release\net8.0-windows10.0.19041.0\win-x64\SettingsWindow.g.cs

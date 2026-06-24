@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using BuffBar.Interop;
 using BuffBar.Services;
+using BuffBar.Core;
 using BuffBar.Widgets.Battery;
 using BuffBar.Widgets.Bluetooth;
 using BuffBar.Widgets.Clock;
@@ -61,35 +62,43 @@ public partial class MainWindow : Window
 
     private void ComposeWidgets()
     {
-        // Centre — heure, puis OBS juste à droite (le couple reste centré)
+        WidgetToggles w = ConfigService.Current.Widgets;
+
+        // Centre — heure (toujours), puis OBS si activé (le couple reste centré)
         var center = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             VerticalAlignment = VerticalAlignment.Stretch
         };
         center.Children.Add(new ClockWidget());
-        center.Children.Add(new ObsWidget());
+        if (w.Obs) center.Children.Add(new ObsWidget());
         CenterRegion.Content = center;
 
-        // Gauche — [Météo] [Uptime] [Réseau] occupent leur largeur naturelle,
-        // [Média] (dernier enfant du DockPanel) remplit tout l'espace restant.
-        var weather = new WeatherWidget();
-        var uptime = new UptimeWidget();
-        var network = new NetworkWidget();
-        DockPanel.SetDock(weather, Dock.Left);
-        DockPanel.SetDock(uptime, Dock.Left);
-        DockPanel.SetDock(network, Dock.Left);
-        LeftRegion.Children.Add(weather);
-        LeftRegion.Children.Add(uptime);
-        LeftRegion.Children.Add(network);
-        LeftRegion.Children.Add(new MediaWidget()); // LastChildFill -> remplit le reste
+        // Gauche — modules à largeur naturelle ; le Média (si activé) remplit le reste.
+        if (w.Weather) AddDockedLeft(new WeatherWidget());
+        if (w.Uptime) AddDockedLeft(new UptimeWidget());
+        if (w.Network) AddDockedLeft(new NetworkWidget());
 
-        // Droite — [Visualiseur] [Volume] [Bluetooth] [Batterie]
-        // (StackPanel horizontal aligné à droite : ajout = gauche -> droite)
-        RightRegion.Children.Add(new VisualizerWidget());
-        RightRegion.Children.Add(new VolumeWidget());
-        RightRegion.Children.Add(new BluetoothWidget());
-        RightRegion.Children.Add(new BatteryWidget());
+        LeftRegion.LastChildFill = w.Media;
+        if (w.Media) LeftRegion.Children.Add(new MediaWidget());
+
+        // Droite — alignée à droite (ajout = gauche -> droite)
+        if (w.Visualizer) RightRegion.Children.Add(new VisualizerWidget());
+        if (w.Volume) RightRegion.Children.Add(new VolumeWidget());
+        if (w.Bluetooth) RightRegion.Children.Add(new BluetoothWidget());
+        if (w.Battery) RightRegion.Children.Add(new BatteryWidget());
+    }
+
+    private void AddDockedLeft(FrameworkElement widget)
+    {
+        DockPanel.SetDock(widget, Dock.Left);
+        LeftRegion.Children.Add(widget);
+    }
+
+    private void OpenSettings()
+    {
+        var win = new SettingsWindow { Owner = this };
+        win.ShowDialog();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -143,7 +152,7 @@ public partial class MainWindow : Window
     /// </summary>
     public void RefreshExternalAccent()
     {
-        bool on = _isExternal && SettingsService.GetExternalAccent();
+        bool on = _isExternal && ConfigService.Current.ExternalAccent;
 
         if (on)
         {
@@ -170,12 +179,6 @@ public partial class MainWindow : Window
         Resources[key] = brush;
     }
 
-    private void OnExternalAccent(object sender, RoutedEventArgs e)
-    {
-        SettingsService.SetExternalAccent(!SettingsService.GetExternalAccent());
-        (Application.Current as App)?.RefreshExternalAccentAll();
-    }
-
     private void OnRestart(object sender, RoutedEventArgs e)
     {
         // Différé : laisse l'événement du menu se terminer avant de fermer/recréer
@@ -188,26 +191,45 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    // ---- Sélecteur de couleurs (menu contextuel) ----
+    // ---- Menu contextuel : Paramètres + sélecteur de couleurs ----
 
     private void OnContextOpened(object sender, RoutedEventArgs e) => SyncThemeChecks();
 
+    private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
+
     private void OnThemeFollow(object sender, RoutedEventArgs e)
     {
-        Services.ThemeService.SetMode(Services.ThemeMode.FollowWindows);
+        ThemeService.SetTheme("windows");
         SyncThemeChecks();
     }
 
     private void OnThemeBuff(object sender, RoutedEventArgs e)
     {
-        Services.ThemeService.SetMode(Services.ThemeMode.Buff);
+        ThemeService.SetTheme("buff");
+        SyncThemeChecks();
+    }
+
+    private void OnThemeCyber(object sender, RoutedEventArgs e)
+    {
+        ThemeService.SetTheme("cyber");
+        SyncThemeChecks();
+    }
+
+    private void OnExternalAccent(object sender, RoutedEventArgs e)
+    {
+        Config c = ConfigService.Current;
+        c.ExternalAccent = !c.ExternalAccent;
+        ConfigService.Save(c);
+        (Application.Current as App)?.RefreshExternalAccentAll();
         SyncThemeChecks();
     }
 
     private void SyncThemeChecks()
     {
-        ThemeFollow.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.FollowWindows;
-        ThemeBuff.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.Buff;
-        ExternalAccent.IsChecked = SettingsService.GetExternalAccent();
+        string theme = ConfigService.Current.Theme;
+        ThemeFollow.IsChecked = theme == "windows";
+        ThemeBuff.IsChecked = theme == "buff";
+        ThemeCyber.IsChecked = theme == "cyber";
+        ExternalAccent.IsChecked = ConfigService.Current.ExternalAccent;
     }
 }

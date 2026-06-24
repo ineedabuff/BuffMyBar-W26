@@ -10,11 +10,11 @@ none
 false
 TRACE;RELEASE;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS10_0_19041_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS10_0_19041_0_OR_GREATER;WINDOWS10_0_18362_0_OR_GREATER;WINDOWS10_0_17763_0_OR_GREATER;WINDOWS8_0_OR_GREATER;WINDOWS7_0_OR_GREATER
 D:\Github\BuffMyBar-W26\BuffBar\App.xaml
-14-1037574524
+15-271507035
 
-42-1936888634
+461486415502
 200-1070067526
-MainWindow.xaml;Themes\BuffTheme.xaml;Widgets\Battery\BatteryWidget.xaml;Widgets\Bluetooth\BluetoothWidget.xaml;Widgets\Clock\CalendarFlyout.xaml;Widgets\Clock\ClockWidget.xaml;Widgets\Media\MediaWidget.xaml;Widgets\Network\NetworkWidget.xaml;Widgets\Obs\ObsWidget.xaml;Widgets\Uptime\UptimeWidget.xaml;Widgets\Visualizer\VisualizerWidget.xaml;Widgets\Volume\VolumeWidget.xaml;Widgets\Weather\WeatherFlyout.xaml;Widgets\Weather\WeatherWidget.xaml;
+MainWindow.xaml;SettingsWindow.xaml;Themes\BuffTheme.xaml;Widgets\Battery\BatteryWidget.xaml;Widgets\Bluetooth\BluetoothWidget.xaml;Widgets\Clock\CalendarFlyout.xaml;Widgets\Clock\ClockWidget.xaml;Widgets\Media\MediaWidget.xaml;Widgets\Network\NetworkWidget.xaml;Widgets\Obs\ObsWidget.xaml;Widgets\Uptime\UptimeWidget.xaml;Widgets\Visualizer\VisualizerWidget.xaml;Widgets\Volume\VolumeWidget.xaml;Widgets\Weather\WeatherFlyout.xaml;Widgets\Weather\WeatherWidget.xaml;
 
 False
 
