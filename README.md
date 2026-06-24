@@ -35,7 +35,21 @@ Au **survol** : pointer l'**heure** ouvre le calendrier, pointer la **météo** 
 
 ## Historique des versions
 
-### v2.0 — Configuration JSON + fenêtre Paramètres *(version actuelle)*
+### v2.1 — Google Agenda dans le calendrier *(version actuelle)*
+
+- [x] Le **flyout de l'horloge** affiche les **événements Google Agenda** : pastille
+      accent sur les jours qui ont des événements, et liste des événements du jour
+      sélectionné (heure + titre, « journée » pour les événements toute la journée).
+- [x] **`GoogleCalendarService`** natif (zéro NuGet) : OAuth 2.0 « application de
+      bureau » avec **PKCE + redirection loopback** (écouteur TCP local, sans droits
+      admin), rafraîchissement automatique du jeton, lecture via l'API Calendar REST.
+- [x] Le **jeton de rafraîchissement** est stocké à part dans
+      `%AppData%\BuffMyBar-W26\google_token.json` (jamais dans `settings.json`).
+- [x] Configuration et connexion depuis la **fenêtre Paramètres** (section
+      *Google Agenda* : activer, Client ID/secret, *Connecter…* / *Déconnecter*).
+      Lecture seule, agenda principal.
+
+### v2.0 — Configuration JSON + fenêtre Paramètres
 
 - [x] **`settings.json`** (façon Waybar) sous `%AppData%\BuffMyBar-W26\` : thème,
       hauteur, ville météo, mode jeu, acrylique, accent externe, OBS et activation
@@ -254,6 +268,7 @@ Toute la configuration vit sous `%AppData%\BuffMyBar-W26\`, créée au premier l
 ```
 %AppData%\BuffMyBar-W26\
 ├── settings.json
+├── google_token.json   (jetons Google Agenda, si connecté)
 ├── themes\
 │   ├── buff.json
 │   ├── windows.json
@@ -285,7 +300,8 @@ Toute la configuration vit sous `%AppData%\BuffMyBar-W26\`, créée au premier l
     "bluetooth": true,
     "battery": true
   },
-  "obs": { "host": "127.0.0.1", "port": 4455, "password": "" }
+  "obs": { "host": "127.0.0.1", "port": 4455, "password": "" },
+  "googleCalendar": { "enabled": false, "clientId": "", "clientSecret": "", "maxEvents": 50 }
 }
 ```
 
@@ -299,6 +315,7 @@ Toute la configuration vit sous `%AppData%\BuffMyBar-W26\`, créée au premier l
 | `acrylic`        | Fond acrylique translucide (repli opaque si non supporté).          |
 | `widgets`        | Activation de chaque module.                                         |
 | `obs`            | Connexion obs-websocket (hôte / port / mot de passe).               |
+| `googleCalendar` | Événements Google Agenda dans le flyout de l'horloge (voir plus bas). |
 
 ### Thèmes — `themes\<nom>.json`
 
@@ -319,6 +336,22 @@ Toute la configuration vit sous `%AppData%\BuffMyBar-W26\`, créée au premier l
 `"followWindows": true` ignore les couleurs et suit le thème de Windows
 (`windows.json`). Crée un nouveau fichier dans `themes\` puis pointe `theme`
 dessus dans `settings.json` pour un thème maison.
+
+### Google Agenda (optionnel)
+
+Le flyout de l'horloge peut afficher tes événements (lecture seule, agenda
+principal). Mise en place, une seule fois :
+
+1. **Google Cloud Console** : crée un projet et active l'**API Google Calendar**.
+2. Crée des identifiants OAuth de type **Application de bureau** → tu obtiens un
+   **Client ID** et un **Client secret**.
+3. Dans BuffMyBar : clic droit → *Paramètres* → **Google Agenda** : colle les
+   identifiants, coche *Afficher mes événements*, puis **Connecter…**. Le navigateur
+   s'ouvre pour le consentement ; au retour, l'état passe à « ✔ Connecté ».
+
+Les jetons sont conservés dans `google_token.json` (jamais dans `settings.json`).
+*Déconnecter* supprime ce fichier. Tout reste natif (HttpClient + écouteur loopback,
+aucun paquet ajouté).
 
 ---
 
@@ -342,6 +375,7 @@ BuffBar/
 │   └── PowerNative.cs       État de la batterie
 ├── Services/
 │   ├── ConfigService.cs     Charge/enregistre settings.json + thèmes (JSON natif)
+│   ├── GoogleCalendarService.cs  OAuth (PKCE/loopback) + lecture Google Agenda (natif)
 │   ├── AutoStartService.cs  Démarrage Windows (HKCU\...\Run)
 │   ├── BackdropService.cs   Fond acrylique DWM
 │   ├── ThemeService.cs      Applique le thème (buff/cyber) ou suit Windows
