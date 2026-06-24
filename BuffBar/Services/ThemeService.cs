@@ -24,6 +24,9 @@ public static class ThemeService
     private static DispatcherTimer? _timer;
     private static string _signature = string.Empty;
 
+    /// <summary>Mode de couleurs courant (suivi Windows ou buff forcé).</summary>
+    public static ThemeMode Mode { get; private set; } = ThemeMode.FollowWindows;
+
     /// <summary>Vrai quand un fond acrylique translucide est actif (voir BackdropService).</summary>
     public static bool AcrylicActive { get; private set; }
 
@@ -60,17 +63,75 @@ public static class ThemeService
 
     public static void Start()
     {
-        if (!BarConfig.FollowWindowsTheme)
-            return;
+        Mode = SettingsService.GetThemeMode(defaultFollow: BarConfig.FollowWindowsTheme);
+        ApplyMode();
+    }
 
-        Apply(force: true);
+    /// <summary>Change le mode de couleurs, l'applique en direct et le mémorise.</summary>
+    public static void SetMode(ThemeMode mode)
+    {
+        if (mode == Mode) return;
+        Mode = mode;
+        SettingsService.SetThemeMode(mode);
+        ApplyMode();
+    }
 
+    private static void ApplyMode()
+    {
+        if (Mode == ThemeMode.FollowWindows)
+        {
+            StartPolling();
+            Apply(force: true);
+        }
+        else
+        {
+            StopPolling();
+            ApplyBuff();
+        }
+    }
+
+    private static void StartPolling()
+    {
+        if (_timer != null) return;
         _timer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromSeconds(4)
         };
-        _timer.Tick += (_, _) => Apply(force: false);
+        _timer.Tick += (_, _) =>
+        {
+            if (Mode == ThemeMode.FollowWindows) Apply(force: false);
+        };
         _timer.Start();
+    }
+
+    private static void StopPolling()
+    {
+        _timer?.Stop();
+        _timer = null;
+    }
+
+    /// <summary>Force la palette buff : fond #000000, accent #ddff24, texte blanc.</summary>
+    private static void ApplyBuff()
+    {
+        _signature = string.Empty;  // pour forcer un nouvel Apply si on revient au suivi
+
+        Set("ModuleBorderBrush", Rgb(0x3A, 0x3A, 0x3A));
+        Set("HoverBorderBrush", Rgb(0x55, 0x55, 0x55));
+        Set("PrimaryText", Rgb(0xFF, 0xFF, 0xFF));
+        Set("SubtleText", Rgb(0xC8, 0xC8, 0xC8));
+        Set("AccentBrush", Rgb(0xDD, 0xFF, 0x24));
+
+        if (AcrylicActive)
+        {
+            // Acrylique : fonds transparents + survol translucide.
+            ApplyAcrylicBackgrounds();
+        }
+        else
+        {
+            Set("BarBackground", Rgb(0x00, 0x00, 0x00));
+            Set("ModuleBackground", Rgb(0x00, 0x00, 0x00));
+            Set("HoverBackground", Rgb(0x1E, 0x1E, 0x1E));
+        }
     }
 
     private static void Apply(bool force)

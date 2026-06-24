@@ -124,4 +124,26 @@ public partial class MainWindow : Window
     {
         Application.Current.Shutdown();
     }
+
+    // ---- Sélecteur de couleurs (menu contextuel) ----
+
+    private void OnContextOpened(object sender, RoutedEventArgs e) => SyncThemeChecks();
+
+    private void OnThemeFollow(object sender, RoutedEventArgs e)
+    {
+        Services.ThemeService.SetMode(Services.ThemeMode.FollowWindows);
+        SyncThemeChecks();
+    }
+
+    private void OnThemeBuff(object sender, RoutedEventArgs e)
+    {
+        Services.ThemeService.SetMode(Services.ThemeMode.Buff);
+        SyncThemeChecks();
+    }
+
+    private void SyncThemeChecks()
+    {
+        ThemeFollow.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.FollowWindows;
+        ThemeBuff.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.Buff;
+    }
 }

@@ -16,7 +16,18 @@
 
     <!-- Menu contextuel : seul moyen de quitter (la barre n'a pas d'entrée dans la barre des tâches) -->
     <Window.ContextMenu>
-        <ContextMenu>
+        <ContextMenu Opened="OnContextOpened">
+            <MenuItem Header="Couleurs de la barre">
+                <MenuItem x:Name="ThemeFollow"
+                          Header="Suivre Windows (barre des tâches)"
+                          IsCheckable="True"
+                          Click="OnThemeFollow"/>
+                <MenuItem x:Name="ThemeBuff"
+                          Header="Buff — noir #000000 / accent #ddff24"
+                          IsCheckable="True"
+                          Click="OnThemeBuff"/>
+            </MenuItem>
+            <Separator/>
             <MenuItem Header="Recharger la position" Click="OnReload"/>
             <Separator/>
             <MenuItem Header="Quitter BuffBar" Click="OnQuit"/>
