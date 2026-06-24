@@ -20,6 +20,7 @@ public static class SettingsService
 {
     private const string KeyPath = @"Software\BuffBar";
     private const string ThemeModeValue = "ThemeMode";
+    private const string ExternalAccentValue = "ExternalAccent";
 
     public static ThemeMode GetThemeMode(bool defaultFollow)
     {
@@ -46,5 +47,29 @@ public static class SettingsService
                        RegistryValueKind.String);
         }
         catch { /* non bloquant : le réglage ne sera simplement pas mémorisé */ }
+    }
+
+    /// <summary>
+    /// Mode « accent inversé » sur le moniteur externe : fond de barre #ddff24,
+    /// fonds de widgets noirs, icônes et police en #ddff24.
+    /// </summary>
+    public static bool GetExternalAccent()
+    {
+        try
+        {
+            using RegistryKey? k = Registry.CurrentUser.OpenSubKey(KeyPath);
+            return (k?.GetValue(ExternalAccentValue) as string) == "1";
+        }
+        catch { return false; }
+    }
+
+    public static void SetExternalAccent(bool on)
+    {
+        try
+        {
+            using RegistryKey k = Registry.CurrentUser.CreateSubKey(KeyPath);
+            k.SetValue(ExternalAccentValue, on ? "1" : "0", RegistryValueKind.String);
+        }
+        catch { /* non bloquant */ }
     }
 }

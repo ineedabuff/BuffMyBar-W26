@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
+using Microsoft.Win32;
 using BuffBar.Services;
 
 namespace BuffBar;
@@ -10,6 +12,8 @@ public partial class App : Application
 {
     private static Mutex? _instanceMutex;
     private readonly List<MainWindow> _bars = new();
+    private bool _restarting;
+    private DispatcherTimer? _displayDebounce;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -33,6 +37,63 @@ public partial class App : Application
             AutoStartService.Enable();
 
         CreateBars();
+
+        // Auto-récupération : reconstruire les barres après un changement d'affichage
+        // (réveil de veille, moniteur éteint/rallumé, changement de résolution).
+        // Anti-rebond pour absorber les rafales d'événements.
+        _displayDebounce = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(1200)
+        };
+        _displayDebounce.Tick += (_, _) => { _displayDebounce!.Stop(); RestartBars(); };
+
+        SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+        SystemEvents.PowerModeChanged += OnPowerModeChanged;
+    }
+
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => ScheduleRestart();
+
+    private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
+    {
+        if (e.Mode == PowerModes.Resume) ScheduleRestart();
+    }
+
+    // Marshalle vers le thread UI puis (ré)arme l'anti-rebond.
+    private void ScheduleRestart()
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _displayDebounce?.Stop();
+            _displayDebounce?.Start();
+        }));
+    }
+
+    /// <summary>
+    /// Ferme toutes les barres et les recrée pour les moniteurs actuellement
+    /// connectés. Corrige les bugs d'AppBar après veille / extinction d'un écran.
+    /// </summary>
+    public void RestartBars()
+    {
+        if (_restarting) return;
+        _restarting = true;
+        try
+        {
+            Logger.Log("App: redémarrage des barres.");
+            foreach (MainWindow bar in _bars)
+            {
+                try { bar.Close(); } catch { /* on poursuit malgré tout */ }
+            }
+            _bars.Clear();
+            CreateBars();
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"App: échec du redémarrage des barres : {ex.Message}");
+        }
+        finally
+        {
+            _restarting = false;
+        }
     }
 
     // Une barre persistante (AppBar) par moniteur connecté.
@@ -46,14 +107,27 @@ public partial class App : Application
 
         foreach (MonitorEntry m in monitors)
         {
-            var bar = new MainWindow(m.Handle);
+            // « Externe » = moniteur non principal (sur un portable, l'écran intégré
+            // est le principal). C'est là que s'applique le mode accent externe.
+            var bar = new MainWindow(m.Handle, isExternal: !m.IsPrimary);
             _bars.Add(bar);
             bar.Show();
         }
     }
 
+    /// <summary>Réapplique l'option « accent externe » à toutes les barres (toggle en direct).</summary>
+    public void RefreshExternalAccentAll()
+    {
+        foreach (MainWindow bar in _bars)
+            bar.RefreshExternalAccent();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+        SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        _displayDebounce?.Stop();
+
         _instanceMutex?.ReleaseMutex();
         _instanceMutex?.Dispose();
         base.OnExit(e);

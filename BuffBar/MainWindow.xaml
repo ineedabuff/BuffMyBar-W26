@@ -7,12 +7,12 @@
         ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="Manual"
-        Background="{StaticResource BarBackground}"
+        Background="{DynamicResource BarBackground}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Ideal"
         FontFamily="{StaticResource AppFont}"
-        Foreground="{StaticResource PrimaryText}">
+        Foreground="{DynamicResource PrimaryText}">
 
     <!-- Menu contextuel : seul moyen de quitter (la barre n'a pas d'entrée dans la barre des tâches) -->
     <Window.ContextMenu>
@@ -26,9 +26,15 @@
                           Header="Buff — noir #000000 / accent #ddff24"
                           IsCheckable="True"
                           Click="OnThemeBuff"/>
+                <Separator/>
+                <MenuItem x:Name="ExternalAccent"
+                          Header="Moniteur externe : fond accent #ddff24"
+                          IsCheckable="True"
+                          Click="OnExternalAccent"/>
             </MenuItem>
             <Separator/>
             <MenuItem Header="Recharger la position" Click="OnReload"/>
+            <MenuItem Header="Redémarrer la barre" Click="OnRestart"/>
             <Separator/>
             <MenuItem Header="Quitter BuffBar" Click="OnQuit"/>
         </ContextMenu>

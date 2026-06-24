@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using BuffBar.Interop;
 using BuffBar.Services;
 using BuffBar.Widgets.Battery;
@@ -22,12 +23,16 @@ public partial class MainWindow : Window
 {
     private AppBarManager? _appBar;
     private readonly IntPtr _targetMonitor;
+    private readonly bool _isExternal;
 
-    public MainWindow() : this(IntPtr.Zero) { }
+    public MainWindow() : this(IntPtr.Zero, false) { }
 
-    public MainWindow(IntPtr targetMonitor)
+    public MainWindow(IntPtr targetMonitor) : this(targetMonitor, false) { }
+
+    public MainWindow(IntPtr targetMonitor, bool isExternal)
     {
         _targetMonitor = targetMonitor;
+        _isExternal = isExternal;
         InitializeComponent();
 
         // Dimensions provisoires : l'AppBarManager les écrasera en pixels physiques.
@@ -100,6 +105,9 @@ public partial class MainWindow : Window
 
         // Fond translucide « acrylique » comme la barre des tâches (repli sûr si non supporté).
         BackdropService.TryApply(this);
+
+        // Mode « accent inversé » sur le moniteur externe, si l'option est active.
+        RefreshExternalAccent();
     }
 
     protected override void OnClosed(EventArgs e)
@@ -118,6 +126,61 @@ public partial class MainWindow : Window
             TargetMonitor = _targetMonitor
         };
         _appBar.Initialize();
+    }
+
+    // ---- Mode « accent inversé » sur le moniteur externe ----
+
+    private static readonly string[] AccentKeys =
+    {
+        "BarBackground", "ModuleBackground", "ModuleBorderBrush",
+        "HoverBackground", "HoverBorderBrush", "PrimaryText", "SubtleText", "AccentBrush"
+    };
+
+    /// <summary>
+    /// Applique (ou retire) la surcharge de couleurs propre à cette fenêtre selon
+    /// l'option « accent externe ». N'a d'effet que sur le moniteur externe.
+    /// Surcharge locale (Window.Resources) : les autres barres ne sont pas touchées.
+    /// </summary>
+    public void RefreshExternalAccent()
+    {
+        bool on = _isExternal && SettingsService.GetExternalAccent();
+
+        if (on)
+        {
+            SetLocalBrush("BarBackground", 0xDD, 0xFF, 0x24);   // fond de barre = accent
+            SetLocalBrush("ModuleBackground", 0x00, 0x00, 0x00); // fonds de widgets noirs
+            SetLocalBrush("ModuleBorderBrush", 0x00, 0x00, 0x00);
+            SetLocalBrush("HoverBackground", 0x1E, 0x1E, 0x1E);
+            SetLocalBrush("HoverBorderBrush", 0x33, 0x33, 0x33);
+            SetLocalBrush("PrimaryText", 0xDD, 0xFF, 0x24);     // police = accent
+            SetLocalBrush("SubtleText", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("AccentBrush", 0xDD, 0xFF, 0x24);     // icônes = accent
+        }
+        else
+        {
+            foreach (string k in AccentKeys)
+                Resources.Remove(k);   // retour aux pinceaux partagés (thème global)
+        }
+    }
+
+    private void SetLocalBrush(string key, byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        Resources[key] = brush;
+    }
+
+    private void OnExternalAccent(object sender, RoutedEventArgs e)
+    {
+        SettingsService.SetExternalAccent(!SettingsService.GetExternalAccent());
+        (Application.Current as App)?.RefreshExternalAccentAll();
+    }
+
+    private void OnRestart(object sender, RoutedEventArgs e)
+    {
+        // Différé : laisse l'événement du menu se terminer avant de fermer/recréer
+        // les fenêtres (celle-ci comprise).
+        Dispatcher.BeginInvoke(new Action(() => (Application.Current as App)?.RestartBars()));
     }
 
     private void OnQuit(object sender, RoutedEventArgs e)
@@ -145,5 +208,6 @@ public partial class MainWindow : Window
     {
         ThemeFollow.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.FollowWindows;
         ThemeBuff.IsChecked = Services.ThemeService.Mode == Services.ThemeMode.Buff;
+        ExternalAccent.IsChecked = SettingsService.GetExternalAccent();
     }
 }

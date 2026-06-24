@@ -31,7 +31,39 @@ Au **survol** : pointer l'**heure** ouvre le calendrier, pointer la **météo** 
 
 ## Historique des versions
 
-### v1.3 — Flyouts interactifs *(version actuelle)*
+### v1.6 — Accent inversé sur le moniteur externe *(version actuelle)*
+
+- [x] **Option « Moniteur externe : fond accent #ddff24 »** (clic droit →
+      *Couleurs de la barre*). Sur l'écran **externe** uniquement : fond de barre
+      `#ddff24`, fonds des widgets **noirs**, police et icônes en `#ddff24`.
+      L'écran principal n'est pas affecté.
+- [x] Mécanique : les styles de module passent en `DynamicResource`, ce qui rend
+      les pinceaux **surchargeables par fenêtre** ; la barre externe pose sa propre
+      surcharge locale (`Window.Resources`), réversible et persistante (registre).
+- [x] Les couleurs **sémantiques** (REC d'OBS, paliers de volume) restent inchangées.
+
+### v1.5 — Redémarrage + auto-récupération
+
+- [x] **Clic droit → « Redémarrer la barre »** : ferme et recrée toutes les barres
+      pour les moniteurs actuellement connectés (réinitialise la réservation d'espace
+      AppBar et l'acrylique).
+- [x] **Auto-récupération** après veille / extinction d'écran : l'app écoute
+      `DisplaySettingsChanged` et `PowerModeChanged` (réveil) et reconstruit les
+      barres automatiquement, avec **anti-rebond** (~1,2 s) pour absorber les rafales
+      d'événements. Corrige les bugs d'AppBar sur le 2ᵉ moniteur.
+- [x] `ShutdownMode = OnExplicitShutdown` : la reconstruction des barres ne ferme
+      plus l'application par mégarde (sortie uniquement via *Quitter*).
+
+### v1.4 — Sélecteur de couleurs
+
+- [x] **Clic droit → « Couleurs de la barre »** : choix entre **Suivre Windows**
+      (clair/sombre + accent, comme la barre des tâches) et **Buff** (fond `#000000`,
+      accent `#ddff24`, texte blanc). Bascule **en direct** sur tous les écrans.
+- [x] Choix **persistant** entre deux lancements via `SettingsService`
+      (registre `HKCU\Software\BuffBar`). `BarConfig.FollowWindowsTheme` ne sert plus
+      que de valeur par défaut au premier démarrage.
+
+### v1.3 — Flyouts interactifs
 
 - [x] **Survol = applet** (façon YASB). Utilitaire `HoverPopup` : ouverture au
       survol du module, fermeture différée (~280 ms) tant que le pointeur est sur
@@ -164,7 +196,20 @@ dotnet run --project BuffBar\BuffBar.csproj -c Release
 Ouverture dans Visual Studio : `BuffBar.sln`.
 L'EXE final : `BuffBar\bin\Release\net8.0-windows10.0.19041.0\BuffBar.exe`.
 
-**Quitter** : clic droit sur la barre → *Quitter*.
+---
+
+## Menu contextuel (clic droit sur la barre)
+
+- **Couleurs de la barre**
+  - *Suivre Windows (barre des tâches)* — clair/sombre + accent du système.
+  - *Buff — noir #000000 / accent #ddff24* — palette signature forcée.
+  - *Moniteur externe : fond accent #ddff24* — accent inversé sur l'écran externe
+    (fond accent, widgets noirs, texte/icônes en accent).
+- **Recharger la position** — recalcule la position de la barre courante.
+- **Redémarrer la barre** — reconstruit toutes les barres (après veille / écran éteint).
+- **Quitter** — ferme BuffBar (seule sortie ; pas d'entrée dans la barre des tâches).
+
+Ces choix sont **mémorisés** d'un lancement à l'autre (registre, voir ci-dessous).
 
 ---
 
@@ -193,6 +238,17 @@ L'EXE final : `BuffBar\bin\Release\net8.0-windows10.0.19041.0\BuffBar.exe`.
 | `ReclaimFullscreenWindows` | `true`              | Réduire les fenêtres plein écran (non exclusif) sous la barre.    |
 | `ObsHost` / `ObsPort` / `ObsPassword` | `127.0.0.1` / `4455` / `""` | Connexion obs-websocket.                          |
 
+> `FollowWindowsTheme`, `UseAcrylicBackdrop` et `KeepBuffAccent` servent de
+> **valeurs par défaut au premier lancement**. Ensuite, ce sont les choix du menu
+> contextuel qui priment.
+
+### Réglages persistants — `HKCU\Software\BuffBar` (`SettingsService`)
+
+| Valeur          | Contenu                                              |
+| --------------- | ---------------------------------------------------- |
+| `ThemeMode`     | `Windows` ou `Buff` (sélecteur de couleurs).         |
+| `ExternalAccent`| `1` / `0` (accent inversé sur le moniteur externe).  |
+
 ---
 
 ## Architecture
@@ -213,7 +269,8 @@ BuffBar/
 ├── Services/
 │   ├── AutoStartService.cs  Démarrage Windows (HKCU\...\Run)
 │   ├── BackdropService.cs   Fond acrylique DWM
-│   ├── ThemeService.cs      Suivi du thème Windows (clair/sombre + accent)
+│   ├── ThemeService.cs      Suivi du thème Windows (clair/sombre + accent) + mode Buff
+│   ├── SettingsService.cs   Réglages persistants (registre) : mode couleurs, accent externe
 │   ├── FontService.cs       Détection de la Nerd Font installée
 │   ├── MonitorService.cs    Énumération des écrans
 │   ├── WeatherService.cs    wttr.in (conditions + prévisions 3 jours)

@@ -29,8 +29,8 @@
          ============================================================ -->
 
     <Style x:Key="ModuleBorder" TargetType="Border">
-        <Setter Property="Background"      Value="{StaticResource ModuleBackground}"/>
-        <Setter Property="BorderBrush"     Value="{StaticResource ModuleBorderBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource ModuleBackground}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource ModuleBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius"    Value="6"/>
         <Setter Property="Padding"         Value="12,2"/>
@@ -38,15 +38,15 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background"  Value="{StaticResource HoverBackground}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource HoverBorderBrush}"/>
+                <Setter Property="Background"  Value="{DynamicResource HoverBackground}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource HoverBorderBrush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
 
     <!-- Texte standard d'un module -->
     <Style x:Key="ModuleText" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
         <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
         <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
