@@ -9,11 +9,16 @@ using System.Threading.Tasks;
 
 namespace BuffBar.Services;
 
+/// <summary>État d'enregistrement OBS : actif + durée écoulée.</summary>
+public readonly record struct ObsStatus(bool Recording, TimeSpan Duration);
+
 /// <summary>
 /// Client obs-websocket v5 minimal et natif (ClientWebSocket).
 /// Suit l'état d'enregistrement d'OBS : handshake Hello/Identify (avec
-/// authentification SHA256 si activée), requête initiale GetRecordStatus,
-/// puis écoute de l'évènement RecordStateChanged.
+/// authentification SHA256 si activée), puis <b>sondage GetRecordStatus chaque
+/// seconde</b> (robuste même si l'évènement RecordStateChanged n'est pas poussé) —
+/// ce qui fournit aussi la durée d'enregistrement. L'évènement RecordStateChanged
+/// est également pris en compte pour une réaction immédiate.
 /// Reconnexion automatique. Aucune dépendance externe.
 /// </summary>
 public sealed class ObsService
@@ -28,11 +33,12 @@ public sealed class ObsService
     private readonly byte[] _rxBuf = new byte[16384];
 
     private volatile bool _recording;
+    private TimeSpan _duration;
 
-    /// <summary>Notifié à chaque changement d'état d'enregistrement (thread d'arrière-plan).</summary>
-    public event Action<bool>? RecordingChanged;
+    /// <summary>Notifié à chaque changement d'état/durée (thread d'arrière-plan).</summary>
+    public event Action<ObsStatus>? StatusChanged;
 
-    public bool Recording => _recording;
+    public ObsStatus Status => new(_recording, _duration);
 
     public ObsService(string host, int port, string password)
     {
@@ -67,7 +73,7 @@ public sealed class ObsService
                 // OBS fermé / connexion perdue / erreur protocole.
             }
 
-            SetRecording(false);  // déconnecté => considéré inactif
+            SetStatus(false, TimeSpan.Zero);  // déconnecté => considéré inactif
 
             try { await Task.Delay(3000, ct); }
             catch { /* annulé */ }
@@ -100,38 +106,72 @@ public sealed class ObsService
             : new { op = 1, d = new { rpcVersion = 1, authentication = auth } };
         await SendAsync(ws, identify, ct);
 
-        // 3) Boucle de réception
-        while (!ct.IsCancellationRequested)
+        // 3) Boucle de réception (+ sondage d'état une fois identifié)
+        using var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        Task? poll = null;
+        try
         {
-            using var msg = await ReceiveJsonAsync(ws, ct);
-            var root = msg.RootElement;
-            int op = root.GetProperty("op").GetInt32();
-            var data = root.GetProperty("d");
-
-            switch (op)
+            while (!ct.IsCancellationRequested)
             {
-                case 2:  // Identified -> on demande l'état courant
-                    await SendAsync(ws, new
-                    {
-                        op = 6,
-                        d = new { requestType = "GetRecordStatus", requestId = "rec-init" }
-                    }, ct);
-                    break;
+                using var msg = await ReceiveJsonAsync(ws, ct);
+                var root = msg.RootElement;
+                int op = root.GetProperty("op").GetInt32();
+                var data = root.GetProperty("d");
 
-                case 7:  // RequestResponse
-                    if (data.GetProperty("requestType").GetString() == "GetRecordStatus"
-                        && data.TryGetProperty("responseData", out var rd)
-                        && rd.TryGetProperty("outputActive", out var oa))
-                        SetRecording(oa.GetBoolean());
-                    break;
+                switch (op)
+                {
+                    case 2:  // Identified -> démarre le sondage périodique
+                        poll ??= Task.Run(() => PollLoopAsync(ws, sessionCts.Token));
+                        break;
 
-                case 5:  // Event
-                    if (data.GetProperty("eventType").GetString() == "RecordStateChanged"
-                        && data.TryGetProperty("eventData", out var ed)
-                        && ed.TryGetProperty("outputActive", out var ea))
-                        SetRecording(ea.GetBoolean());
-                    break;
+                    case 7:  // RequestResponse (GetRecordStatus)
+                        if (data.GetProperty("requestType").GetString() == "GetRecordStatus"
+                            && data.TryGetProperty("responseData", out var rd))
+                        {
+                            bool active = rd.TryGetProperty("outputActive", out var oa) && oa.GetBoolean();
+                            TimeSpan dur = TimeSpan.Zero;
+                            if (rd.TryGetProperty("outputDuration", out var od) && od.TryGetDouble(out double ms))
+                                dur = TimeSpan.FromMilliseconds(ms);
+                            SetStatus(active, active ? dur : TimeSpan.Zero);
+                        }
+                        break;
+
+                    case 5:  // Event (réaction immédiate)
+                        if (data.GetProperty("eventType").GetString() == "RecordStateChanged"
+                            && data.TryGetProperty("eventData", out var ed)
+                            && ed.TryGetProperty("outputActive", out var ea))
+                        {
+                            bool active = ea.GetBoolean();
+                            SetStatus(active, active ? _duration : TimeSpan.Zero);
+                        }
+                        break;
+                }
             }
+        }
+        finally
+        {
+            try { sessionCts.Cancel(); } catch { }
+            if (poll is not null) { try { await poll; } catch { } }
+        }
+    }
+
+    /// <summary>Demande GetRecordStatus chaque seconde (unique émetteur de la session).</summary>
+    private async Task PollLoopAsync(ClientWebSocket ws, CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
+        {
+            try
+            {
+                await SendAsync(ws, new
+                {
+                    op = 6,
+                    d = new { requestType = "GetRecordStatus", requestId = "rec-poll" }
+                }, ct);
+            }
+            catch { break; }
+
+            try { await Task.Delay(1000, ct); }
+            catch { break; }
         }
     }
 
@@ -167,10 +207,11 @@ public sealed class ObsService
     private static string Sha256Base64(string input)
         => Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(input)));
 
-    private void SetRecording(bool value)
+    private void SetStatus(bool recording, TimeSpan duration)
     {
-        if (_recording == value) return;
-        _recording = value;
-        RecordingChanged?.Invoke(value);
+        bool changed = _recording != recording || _duration != duration;
+        _recording = recording;
+        _duration = duration;
+        if (changed) StatusChanged?.Invoke(new ObsStatus(recording, duration));
     }
 }
