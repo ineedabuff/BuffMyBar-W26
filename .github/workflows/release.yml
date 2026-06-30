@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish BuffBar
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore .\BuffBar\BuffBar.csproj
+
+      - name: Publish portable framework-dependent build
+        run: dotnet publish .\BuffBar\BuffBar.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false -o .\artifacts\BuffBar-win-x64
+
+      - name: Create ZIP artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .\artifacts\release | Out-Null
+          Compress-Archive -Path .\artifacts\BuffBar-win-x64\* -DestinationPath .\artifacts\release\BuffBar-win-x64.zip -Force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: .\artifacts\release\BuffBar-win-x64.zip

@@ -1,56 +1,41 @@
-# ==========================
-# Visual Studio / Rider
-# ==========================
+# Visual Studio / IDE
 .vs/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
-# ==========================
-# .NET
-# ==========================
-bin/
-obj/
+# .NET build output
+[Bb]in/
+[Oo]bj/
 TestResults/
 
-# ==========================
-# Publish
-# ==========================
+# Publish / release artifacts
 publish/
 artifacts/
+releases/
+*.nupkg
 
-# ==========================
-# Installer
-# ==========================
+# Installers / binaries generated locally
 installer/*.exe
 installer/*.msi
-
-# ==========================
-# Debug
-# ==========================
+Installer/*.exe
+Installer/*.msi
 *.pdb
-*.cache
-*.log
 
-# ==========================
-# Temporary
-# ==========================
+# Logs / temp
+*.log
 *.tmp
 *.bak
 *.old
 *.orig
 
-# ==========================
-# Sprint files
-# ==========================
+# Sprint / local backups
 Sprint-*.ps1
 Sprint-*.zip
 .sprint-backups/
 
-# ==========================
-# OS
-# ==========================
+# OS files
 Thumbs.db
 Desktop.ini
 .DS_Store
