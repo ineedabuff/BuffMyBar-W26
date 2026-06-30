@@ -2,89 +2,69 @@ using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Threading;
-using Microsoft.Win32;
 using BuffBar.Core;
 
 namespace BuffBar.Services;
 
 /// <summary>
-/// Adapte la palette de BuffBar au thème Windows 11, comme la barre des tâches :
-///  - mode clair / sombre ("Mode Windows" = SystemUsesLightTheme) ;
-///  - couleur d'accentuation sur la barre des tâches (ColorPrevalence) ;
-/// avec mise à jour en direct (sondage léger toutes les 4 s).
-///
-/// La mise à jour modifie la COULEUR des pinceaux existants (sans les remplacer),
-/// donc tous les modules se rafraîchissent automatiquement. Les couleurs sémantiques
-/// figées (REC, paliers de volume) ne sont pas touchées.
+/// Applique les couleurs actives de BuffMyBar.
+/// En mode "windows", cette classe suit le vrai theme Windows 11 via WindowsThemeService.
 /// </summary>
 public static class ThemeService
 {
-    private const string PersonalizeKey =
-        @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+    private static bool _followingWindows;
 
-    private static DispatcherTimer? _timer;
-    private static string _signature = string.Empty;
+    public static event Action? Applied;
 
-    /// <summary>Vrai quand un fond acrylique translucide est actif (voir BackdropService).</summary>
-    public static bool AcrylicActive { get; private set; }
-
-    /// <summary>
-    /// Active le mode acrylique : les fonds Bar/Module deviennent transparents
-    /// (l'acrylique du système transparaît) et le survol passe en translucide.
-    /// </summary>
-    public static void EnableAcrylic()
+    /// <summary>Point d'entree au demarrage.</summary>
+    public static void Start()
     {
-        AcrylicActive = true;
-        ApplyAcrylicBackgrounds();
+        WindowsThemeService.Start();
+        WindowsThemeService.Changed += OnWindowsThemeChanged;
+        ApplyConfigTheme();
     }
 
-    private static void ApplyAcrylicBackgrounds()
+    public static void Stop()
     {
-        bool light = ReadDword(PersonalizeKey, "SystemUsesLightTheme", 0) == 1;
-
-        SetArgb("BarBackground", 0x00, 0x00, 0x00, 0x00);
-        SetArgb("ModuleBackground", 0x00, 0x00, 0x00, 0x00);
-
-        if (light)
-            SetArgb("HoverBackground", 0x18, 0x00, 0x00, 0x00);
-        else
-            SetArgb("HoverBackground", 0x22, 0xFF, 0xFF, 0xFF);
+        WindowsThemeService.Changed -= OnWindowsThemeChanged;
+        WindowsThemeService.Stop();
     }
 
-    /// <summary>Point d'entrée au démarrage : applique le thème de la config.</summary>
-    public static void Start() => ApplyConfigTheme();
-
-    /// <summary>Applique le thème nommé dans la config (buff / cyber / windows).</summary>
+    /// <summary>Applique le theme nomme dans settings.json.</summary>
     public static void ApplyConfigTheme()
     {
         ThemePalette p = ConfigService.LoadTheme(ConfigService.Current.Theme);
-        if (p.FollowWindows)
-        {
-            StartPolling();
-            Apply(force: true);        // suit Windows en direct
-        }
+        _followingWindows = p.FollowWindows;
+
+        if (_followingWindows)
+            ApplyWindows(WindowsThemeService.Current);
         else
-        {
-            StopPolling();
-            ApplyPalette(p);           // palette explicite (buff, cyber, ...)
-        }
+            ApplyPalette(p);
     }
 
-    /// <summary>Change le thème, l'enregistre et l'applique en direct.</summary>
+    /// <summary>Change le theme, sauvegarde et applique en direct.</summary>
     public static void SetTheme(string name)
     {
         Config c = ConfigService.Current;
-        if (c.Theme == name) return;
+        if (string.Equals(c.Theme, name, StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyConfigTheme();
+            return;
+        }
+
         c.Theme = name;
         ConfigService.Save(c);
         ApplyConfigTheme();
     }
 
+    private static void OnWindowsThemeChanged(WindowsThemeSnapshot snapshot)
+    {
+        if (_followingWindows)
+            ApplyWindows(snapshot);
+    }
+
     private static void ApplyPalette(ThemePalette p)
     {
-        _signature = string.Empty;   // pour forcer un nouvel Apply si on revient à « windows »
-
         Set("BarBackground", Hex(p.BarBackground));
         Set("ModuleBackground", Hex(p.ModuleBackground));
         Set("ModuleBorderBrush", Hex(p.ModuleBorder));
@@ -93,180 +73,130 @@ public static class ThemeService
         Set("PrimaryText", Hex(p.PrimaryText));
         Set("SubtleText", Hex(p.SubtleText));
         Set("AccentBrush", Hex(p.Accent));
-
-        if (AcrylicActive)
-            ApplyAcrylicBackgrounds();
+        Applied?.Invoke();
     }
 
-    private static void StartPolling()
+    private static void ApplyWindows(WindowsThemeSnapshot w)
     {
-        if (_timer != null) return;
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(4)
-        };
-        _timer.Tick += (_, _) =>
-        {
-            if (ConfigService.LoadTheme(ConfigService.Current.Theme).FollowWindows)
-                Apply(force: false);
-        };
-        _timer.Start();
-    }
+        Palette p = ComputeWindowsPalette(w);
 
-    private static void StopPolling()
-    {
-        _timer?.Stop();
-        _timer = null;
-    }
-
-    private static void Apply(bool force)
-    {
-        bool light = ReadDword(PersonalizeKey, "SystemUsesLightTheme", 0) == 1;
-        bool prevalence = ReadDword(PersonalizeKey, "ColorPrevalence", 0) == 1;
-        Color accent = ReadAccent();
-
-        string sig = $"{light}|{prevalence}|{accent}";
-        if (!force && sig == _signature) return;
-        _signature = sig;
-
-        Palette p = Compute(light, prevalence, accent);
-
-        Set("BarBackground", p.Bg);
-        Set("ModuleBackground", p.Bg);
-        Set("ModuleBorderBrush", p.Border);
-        Set("HoverBackground", p.Hover);
+        Set("BarBackground", p.BarBackground);
+        Set("ModuleBackground", p.ModuleBackground);
+        Set("ModuleBorderBrush", p.ModuleBorder);
+        Set("HoverBackground", p.HoverBackground);
         Set("HoverBorderBrush", p.HoverBorder);
-        Set("PrimaryText", p.Text);
-        Set("SubtleText", p.Subtle);
+        Set("PrimaryText", p.PrimaryText);
+        Set("SubtleText", p.SubtleText);
+
         if (!BarConfig.KeepBuffAccent)
-            Set("AccentBrush", accent);
+            Set("AccentBrush", w.AccentColor);
 
-        // En mode acrylique, les fonds Bar/Module/Survol restent translucides.
-        if (AcrylicActive)
-            ApplyAcrylicBackgrounds();
+        Applied?.Invoke();
     }
 
-    // ---- Calcul de la palette ----
-
-    private struct Palette
+    private readonly struct Palette
     {
-        public Color Bg, Border, Hover, HoverBorder, Text, Subtle;
+        public required Color BarBackground { get; init; }
+        public required Color ModuleBackground { get; init; }
+        public required Color ModuleBorder { get; init; }
+        public required Color HoverBackground { get; init; }
+        public required Color HoverBorder { get; init; }
+        public required Color PrimaryText { get; init; }
+        public required Color SubtleText { get; init; }
     }
 
-    private static Palette Compute(bool light, bool prevalence, Color accent)
+    private static Palette ComputeWindowsPalette(WindowsThemeSnapshot w)
     {
-        if (prevalence)
+        if (w.AccentOnTaskbar)
         {
-            Color bg = light ? accent : Scale(accent, 0.55f);
-            bool darkBg = Lum(bg) < 0.5;
-            Color text = darkBg ? Rgb(0xFF, 0xFF, 0xFF) : Rgb(0x1A, 0x1A, 0x1A);
+            Color bg = w.SystemLight ? Lighten(w.AccentColor, 0.05f) : Darken(w.AccentColor, 0.42f);
+            bool dark = Luminance(bg) < 0.45;
+            Color text = dark ? Rgb(0xFF, 0xFF, 0xFF) : Rgb(0x18, 0x18, 0x18);
             return new Palette
             {
-                Bg = bg,
-                Text = text,
-                Subtle = Blend(text, bg, 0.30f),
-                Border = darkBg ? Lighten(bg, 0.18f) : Darken(bg, 0.18f),
-                Hover = darkBg ? Lighten(bg, 0.10f) : Darken(bg, 0.08f),
-                HoverBorder = darkBg ? Lighten(bg, 0.30f) : Darken(bg, 0.28f)
+                BarBackground = bg,
+                ModuleBackground = bg,
+                ModuleBorder = bg,
+                HoverBackground = dark ? Lighten(bg, 0.12f) : Darken(bg, 0.07f),
+                HoverBorder = dark ? Lighten(bg, 0.18f) : Darken(bg, 0.13f),
+                PrimaryText = text,
+                SubtleText = Blend(text, bg, 0.34f)
             };
         }
 
-        if (light)
+        if (w.SystemLight)
         {
             return new Palette
             {
-                Bg = Rgb(0xF2, 0xF2, 0xF2),
-                Text = Rgb(0x1A, 0x1A, 0x1A),
-                Subtle = Rgb(0x5C, 0x5C, 0x5C),
-                Border = Rgb(0xD0, 0xD0, 0xD0),
-                Hover = Rgb(0xE5, 0xE5, 0xE5),
-                HoverBorder = Rgb(0xBF, 0xBF, 0xBF)
+                BarBackground = Rgb(0xF3, 0xF3, 0xF3),
+                ModuleBackground = Rgb(0xF3, 0xF3, 0xF3),
+                ModuleBorder = Rgb(0xF3, 0xF3, 0xF3),
+                HoverBackground = Rgb(0xE8, 0xE8, 0xE8),
+                HoverBorder = Rgb(0xD6, 0xD6, 0xD6),
+                PrimaryText = Rgb(0x1B, 0x1B, 0x1B),
+                SubtleText = Rgb(0x5F, 0x5F, 0x5F)
             };
         }
 
-        // Sombre (proche de la barre des tâches Win11).
         return new Palette
         {
-            Bg = Rgb(0x1C, 0x1C, 0x1C),
-            Text = Rgb(0xFF, 0xFF, 0xFF),
-            Subtle = Rgb(0xB8, 0xB8, 0xB8),
-            Border = Rgb(0x33, 0x33, 0x33),
-            Hover = Rgb(0x2D, 0x2D, 0x2D),
-            HoverBorder = Rgb(0x45, 0x45, 0x45)
+            BarBackground = Rgb(0x1F, 0x1F, 0x1F),
+            ModuleBackground = Rgb(0x1F, 0x1F, 0x1F),
+            ModuleBorder = Rgb(0x1F, 0x1F, 0x1F),
+            HoverBackground = Rgb(0x2B, 0x2B, 0x2B),
+            HoverBorder = Rgb(0x3A, 0x3A, 0x3A),
+            PrimaryText = Rgb(0xF7, 0xF7, 0xF7),
+            SubtleText = Rgb(0xB7, 0xB7, 0xB7)
         };
     }
 
-    // ---- Lecture des réglages Windows ----
-
-    private static int ReadDword(string path, string name, int fallback)
+    private static void Set(string key, Color color)
     {
-        try
-        {
-            using RegistryKey? k = Registry.CurrentUser.OpenSubKey(path);
-            return k?.GetValue(name) is int v ? v : fallback;
-        }
-        catch { return fallback; }
+        if (Application.Current?.Resources[key] is SolidColorBrush brush && !brush.IsFrozen)
+            brush.Color = color;
+        else if (Application.Current != null)
+            Application.Current.Resources[key] = new SolidColorBrush(color);
     }
 
-    private static Color ReadAccent()
-    {
-        try
-        {
-            var ui = new Windows.UI.ViewManagement.UISettings();
-            var a = ui.GetColorValue(Windows.UI.ViewManagement.UIColorType.Accent);
-            return Color.FromRgb(a.R, a.G, a.B);
-        }
-        catch
-        {
-            return Rgb(0x00, 0x78, 0xD4);  // bleu Windows par défaut
-        }
-    }
-
-    // ---- Application aux ressources (mutation en place) ----
-
-    private static void Set(string key, Color c)
-    {
-        if (Application.Current.Resources[key] is SolidColorBrush b && !b.IsFrozen)
-            b.Color = c;
-        else
-            Application.Current.Resources[key] = new SolidColorBrush(c);
-    }
-
-    private static void SetArgb(string key, int a, int r, int g, int b)
-        => Set(key, Color.FromArgb((byte)a, (byte)r, (byte)g, (byte)b));
-
-    // ---- Utilitaires couleur ----
-
-    private static Color Rgb(int r, int g, int b) => Color.FromRgb((byte)r, (byte)g, (byte)b);
-
-    /// <summary>Convertit "#RRGGBB" ou "#AARRGGBB" en Color (repli : magenta visible).</summary>
     private static Color Hex(string s)
     {
         try
         {
-            string h = s.TrimStart('#');
+            string h = s.Trim().TrimStart('#');
             if (h.Length == 6)
+            {
                 return Color.FromRgb(
-                    byte.Parse(h.Substring(0, 2), NumberStyles.HexNumber),
+                    byte.Parse(h[..2], NumberStyles.HexNumber),
                     byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
                     byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber));
+            }
             if (h.Length == 8)
+            {
                 return Color.FromArgb(
-                    byte.Parse(h.Substring(0, 2), NumberStyles.HexNumber),
+                    byte.Parse(h[..2], NumberStyles.HexNumber),
                     byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
                     byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber),
                     byte.Parse(h.Substring(6, 2), NumberStyles.HexNumber));
+            }
         }
-        catch { /* repli ci-dessous */ }
+        catch
+        {
+            // couleur de diagnostic visible
+        }
+
         return Color.FromRgb(0xFF, 0x00, 0xFF);
     }
-    private static double Lum(Color c) => (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) / 255.0;
-    private static Color Scale(Color c, float f) => Rgb(Cl(c.R * f), Cl(c.G * f), Cl(c.B * f));
-    private static Color Lighten(Color c, float t) => Blend(c, Rgb(0xFF, 0xFF, 0xFF), t);
-    private static Color Darken(Color c, float t) => Blend(c, Rgb(0, 0, 0), t);
+
+    private static Color Rgb(int r, int g, int b) => Color.FromRgb((byte)r, (byte)g, (byte)b);
+
+    private static double Luminance(Color c) => (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) / 255.0;
+
+    private static Color Lighten(Color c, float amount) => Blend(c, Rgb(0xFF, 0xFF, 0xFF), amount);
+
+    private static Color Darken(Color c, float amount) => Blend(c, Rgb(0x00, 0x00, 0x00), amount);
 
     private static Color Blend(Color a, Color b, float t)
-        => Rgb(Cl(a.R + (b.R - a.R) * t), Cl(a.G + (b.G - a.G) * t), Cl(a.B + (b.B - a.B) * t));
+        => Rgb(Clamp(a.R + (b.R - a.R) * t), Clamp(a.G + (b.G - a.G) * t), Clamp(a.B + (b.B - a.B) * t));
 
-    private static int Cl(double v) => (int)Math.Max(0, Math.Min(255, v));
+    private static int Clamp(double value) => (int)Math.Max(0, Math.Min(255, value));
 }

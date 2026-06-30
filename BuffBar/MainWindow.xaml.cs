@@ -183,6 +183,14 @@ public partial class MainWindow : Window
         Resources[key] = brush;
     }
 
+
+    /// <summary>Réapplique les éléments dépendants du thème sur cette fenêtre.</summary>
+    public void RefreshThemeSurface()
+    {
+        RefreshExternalAccent();
+        BackdropService.Refresh(this);
+    }
+
     private void OnRestart(object sender, RoutedEventArgs e)
     {
         // Différé : laisse l'événement du menu se terminer avant de fermer/recréer

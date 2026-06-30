@@ -32,6 +32,7 @@ public partial class App : Application
         Logger.Log($"App: démarrage. Journal : {Logger.LogPath}");
         FontService.Apply();
         ThemeService.Start();
+        ThemeService.Applied += OnThemeApplied;
 
         base.OnStartup(e);
 
@@ -118,6 +119,16 @@ public partial class App : Application
         }
     }
 
+
+    private void OnThemeApplied()
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            foreach (MainWindow bar in _bars)
+                bar.RefreshThemeSurface();
+        }));
+    }
+
     /// <summary>Réapplique l'option « accent externe » à toutes les barres (toggle en direct).</summary>
     public void RefreshExternalAccentAll()
     {
@@ -136,6 +147,8 @@ public partial class App : Application
     {
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        ThemeService.Applied -= OnThemeApplied;
+        ThemeService.Stop();
         _displayDebounce?.Stop();
 
         _instanceMutex?.ReleaseMutex();

@@ -17,7 +17,7 @@
 
     <!-- Accent identitaire (#ddff24) disponible pour usage futur :
          workspace actif, indicateur d'enregistrement OBS, pic du visualiseur, etc. -->
-    <SolidColorBrush x:Key="AccentBrush"        Color="#DDFF24"/>
+    <SolidColorBrush x:Key="AccentBrush"        Color="#FFFFFF"/>
 
     <!-- ============================================================
          Typographie â€” JetBrainsMono Nerd Font (repli Consolas)
