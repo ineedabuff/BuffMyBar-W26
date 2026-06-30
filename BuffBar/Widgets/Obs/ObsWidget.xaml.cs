@@ -1,21 +1,34 @@
-using System;
+﻿using System;
+
+using BuffMyBar.Services;
 using System.Windows;
+
+using BuffMyBar.Services;
 using System.Windows.Controls;
+
+using BuffMyBar.Services;
 using System.Windows.Media;
+
+using BuffMyBar.Services;
 using System.Windows.Media.Animation;
+
+using BuffMyBar.Services;
 using BuffBar.Core;
 using BuffBar.Services;
 
 namespace BuffBar.Widgets.Obs;
 
 /// <summary>
-/// Module OBS : "● REC hh:mm:ss".
-///  - Inactif : blanc fixe (comme les autres modules), minuteur masqué.
-///  - Enregistrement : #FF3131, pastille clignotante (1 Hz) et durée écoulée.
-/// État + durée obtenus en direct via obs-websocket (ObsService, sondage 1 s).
+/// Module OBS : "â— REC hh:mm:ss".
+///  - Inactif : blanc fixe (comme les autres modules), minuteur masquÃ©.
+///  - Enregistrement : #FF3131, pastille clignotante (1 Hz) et durÃ©e Ã©coulÃ©e.
+/// Ã‰tat + durÃ©e obtenus en direct via obs-websocket (ObsService, sondage 1 s).
 /// </summary>
 public partial class ObsWidget : UserControl, IBarWidget
 {
+    // BUFFMYBAR_SPRINT001_OBS_AUTOHIDE
+    private readonly ObsProcessWatcher _obsProcessWatcher = new();
+
     private static readonly Brush RecBrush = CreateRecBrush();
 
     private readonly ObsService _obs = new(BarConfig.ObsHost, BarConfig.ObsPort, BarConfig.ObsPassword);
@@ -27,6 +40,13 @@ public partial class ObsWidget : UserControl, IBarWidget
     public ObsWidget()
     {
         InitializeComponent();
+        // BUFFMYBAR_SPRINT001_OBS_AUTOHIDE
+        Visibility = Visibility.Collapsed;
+        _obsProcessWatcher.IsRunningChanged += (_, isRunning) =>
+        {
+            Dispatcher.Invoke(() => Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed);
+        };
+        _obsProcessWatcher.Start();
         _obs.StatusChanged += OnStatusChanged;
 
         Loaded += (_, _) => { ApplyStatus(_obs.Status); _obs.Start(); };
@@ -65,7 +85,7 @@ public partial class ObsWidget : UserControl, IBarWidget
 
     private void StartBlink()
     {
-        // Clignotement net (allumé/éteint) à 1 Hz, sur la pastille seulement
+        // Clignotement net (allumÃ©/Ã©teint) Ã  1 Hz, sur la pastille seulement
         // pour garder le minuteur lisible.
         var blink = new DoubleAnimationUsingKeyFrames
         {

@@ -82,11 +82,11 @@
   "project": {
     "version": "0.1.0",
     "restore": {
-      "projectUniqueName": "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
+      "projectUniqueName": "D:\\GitHub\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
       "projectName": "BuffBar",
-      "projectPath": "D:\\Github\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
+      "projectPath": "D:\\GitHub\\BuffMyBar-W26\\BuffBar\\BuffBar.csproj",
       "packagesPath": "C:\\Users\\buff\\.nuget\\packages\\",
-      "outputPath": "D:\\Github\\BuffMyBar-W26\\BuffBar\\obj\\",
+      "outputPath": "D:\\GitHub\\BuffMyBar-W26\\BuffBar\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\buff\\AppData\\Roaming\\NuGet\\NuGet.Config"
