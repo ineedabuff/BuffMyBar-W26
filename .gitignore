@@ -1,23 +1,56 @@
-## Build artefacts .NET
-[Bb]in/
-[Oo]bj/
-[Pp]ublish/
+# ==========================
+# Visual Studio / Rider
+# ==========================
+.vs/
 *.user
 *.suo
-*.cache
+*.userosscache
+*.sln.docstates
 
-## Inno Setup output
-/Output/
-Buffmybar-W26-Setup*.exe
+# ==========================
+# .NET
+# ==========================
+bin/
+obj/
+TestResults/
 
-## IDE
-.vs/
-.vscode/
-*.swp
-
-## Secrets locaux (jamais versionnés)
-google_token.json
-
-## Binaires de sortie (historiquement versionnés par erreur)
-installer/*.exe
+# ==========================
+# Publish
+# ==========================
 publish/
+artifacts/
+
+# ==========================
+# Installer
+# ==========================
+installer/*.exe
+installer/*.msi
+
+# ==========================
+# Debug
+# ==========================
+*.pdb
+*.cache
+*.log
+
+# ==========================
+# Temporary
+# ==========================
+*.tmp
+*.bak
+*.old
+*.orig
+
+# ==========================
+# Sprint files
+# ==========================
+Sprint-*.ps1
+Sprint-*.zip
+.sprint-backups/
+
+# ==========================
+# OS
+# ==========================
+Thumbs.db
+Desktop.ini
+.DS_Store
