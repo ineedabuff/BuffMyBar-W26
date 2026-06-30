@@ -13,10 +13,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ineedabuff")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+ef1e60859eb7f4ad446d72787d9212d71141aca6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+d6c5c4a2f83be486d00b8c846c2d456f27d95763")]
 [assembly: System.Reflection.AssemblyProductAttribute("BuffBar")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BuffBar")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("BuffBar.Tests")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows10.0.19041.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows10.0.17763.0")]
 
