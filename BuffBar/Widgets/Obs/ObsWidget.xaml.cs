@@ -1,38 +1,25 @@
-﻿using System;
-
-using BuffMyBar.Services;
+using System;
 using System.Windows;
-
-using BuffMyBar.Services;
 using System.Windows.Controls;
-
-using BuffMyBar.Services;
 using System.Windows.Media;
-
-using BuffMyBar.Services;
 using System.Windows.Media.Animation;
-
-using BuffMyBar.Services;
 using BuffBar.Core;
 using BuffBar.Services;
 
 namespace BuffBar.Widgets.Obs;
 
 /// <summary>
-/// Module OBS : "â— REC hh:mm:ss".
-///  - Inactif : blanc fixe (comme les autres modules), minuteur masquÃ©.
-///  - Enregistrement : #FF3131, pastille clignotante (1 Hz) et durÃ©e Ã©coulÃ©e.
-/// Ã‰tat + durÃ©e obtenus en direct via obs-websocket (ObsService, sondage 1 s).
+/// OBS module.
+/// Sprint-003: visible only while OBS is running, with a light fade.
 /// </summary>
 public partial class ObsWidget : UserControl, IBarWidget
 {
-    // BUFFMYBAR_SPRINT001_OBS_AUTOHIDE
-    private readonly ObsProcessWatcher _obsProcessWatcher = new();
-
     private static readonly Brush RecBrush = CreateRecBrush();
 
     private readonly ObsService _obs = new(BarConfig.ObsHost, BarConfig.ObsPort, BarConfig.ObsPassword);
+    private readonly ObsProcessWatcher _obsProcessWatcher = new();
     private bool _recording;
+    private bool _obsRunning;
 
     public string WidgetId => "obs";
     public FrameworkElement View => this;
@@ -40,21 +27,68 @@ public partial class ObsWidget : UserControl, IBarWidget
     public ObsWidget()
     {
         InitializeComponent();
-        // BUFFMYBAR_SPRINT001_OBS_AUTOHIDE
+
+        Opacity = 0.0;
         Visibility = Visibility.Collapsed;
-        _obsProcessWatcher.IsRunningChanged += (_, isRunning) =>
-        {
-            Dispatcher.Invoke(() => Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed);
-        };
-        _obsProcessWatcher.Start();
+
+        _obsProcessWatcher.IsRunningChanged += OnObsRunningChanged;
         _obs.StatusChanged += OnStatusChanged;
 
-        Loaded += (_, _) => { ApplyStatus(_obs.Status); _obs.Start(); };
-        Unloaded += (_, _) => _obs.Stop();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _obsProcessWatcher.Start();
+        ApplyStatus(_obs.Status);
+        _obs.Start();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _obs.Stop();
+        _obsProcessWatcher.Stop();
+    }
+
+    private void OnObsRunningChanged(object? sender, bool isRunning)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _obsRunning = isRunning;
+            FadeVisibility(isRunning);
+        }));
     }
 
     private void OnStatusChanged(ObsStatus status)
         => Dispatcher.BeginInvoke(new Action(() => ApplyStatus(status)));
+
+    private void FadeVisibility(bool show)
+    {
+        BeginAnimation(OpacityProperty, null);
+
+        if (show)
+        {
+            Visibility = Visibility.Visible;
+            var fadeIn = new DoubleAnimation(Opacity, 1.0, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            BeginAnimation(OpacityProperty, fadeIn);
+            return;
+        }
+
+        var fadeOut = new DoubleAnimation(Opacity, 0.0, TimeSpan.FromMilliseconds(160))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+        };
+        fadeOut.Completed += (_, _) =>
+        {
+            if (!_obsRunning)
+                Visibility = Visibility.Collapsed;
+        };
+        BeginAnimation(OpacityProperty, fadeOut);
+    }
 
     private void ApplyStatus(ObsStatus status)
     {
@@ -85,8 +119,6 @@ public partial class ObsWidget : UserControl, IBarWidget
 
     private void StartBlink()
     {
-        // Clignotement net (allumÃ©/Ã©teint) Ã  1 Hz, sur la pastille seulement
-        // pour garder le minuteur lisible.
         var blink = new DoubleAnimationUsingKeyFrames
         {
             RepeatBehavior = RepeatBehavior.Forever,
@@ -108,8 +140,8 @@ public partial class ObsWidget : UserControl, IBarWidget
 
     private static Brush CreateRecBrush()
     {
-        var b = new SolidColorBrush(Color.FromRgb(0xFF, 0x31, 0x31));
-        b.Freeze();
-        return b;
+        var brush = new SolidColorBrush(Color.FromRgb(0xFF, 0x31, 0x31));
+        brush.Freeze();
+        return brush;
     }
 }

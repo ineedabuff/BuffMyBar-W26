@@ -2,24 +2,25 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
 
 namespace BuffBar.Widgets.Visualizer;
 
 /// <summary>
-/// Module visualiseur audio (style Cava) : barres alimentées par la capture
-/// loopback WASAPI. Lissage attaque/chute asymétrique pour un rendu naturel
-/// (montée rapide, descente douce).
+/// Audio visualizer widget.
+/// Sprint-003: stable ~30 FPS render cadence with smoother attack/decay.
 /// </summary>
 public partial class VisualizerWidget : UserControl, IBarWidget
 {
-    private const float Attack = 0.55f;  // montée (plus haut = plus vif)
-    private const float Decay = 0.10f;  // descente (plus bas = retombée plus douce)
+    private const float Attack = 0.42f;
+    private const float Decay = 0.075f;
 
     private AudioCapture? _capture;
     private readonly float[] _target = new float[AudioCapture.Bands];
     private readonly float[] _display = new float[AudioCapture.Bands];
+    private readonly DispatcherTimer _renderTimer;
 
     public string WidgetId => "visualizer";
     public FrameworkElement View => this;
@@ -27,24 +28,28 @@ public partial class VisualizerWidget : UserControl, IBarWidget
     public VisualizerWidget()
     {
         InitializeComponent();
+
+        _renderTimer = new DispatcherTimer(DispatcherPriority.Render)
+        {
+            Interval = TimeSpan.FromMilliseconds(33)
+        };
+        _renderTimer.Tick += OnFrame;
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Loaded comme Unloaded peuvent se déclencher plusieurs fois : on n'acquiert
-        // qu'une seule référence à la fois (symétrique de OnUnloaded).
         _capture ??= SharedAudioCapture.Acquire();
-        CompositionTarget.Rendering -= OnFrame;
-        CompositionTarget.Rendering += OnFrame;
+        if (!_renderTimer.IsEnabled)
+            _renderTimer.Start();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        CompositionTarget.Rendering -= OnFrame;
-        // Unloaded peut se déclencher plusieurs fois (recomposition de l'arbre) :
-        // on ne libère qu'une fois la référence réellement détenue.
+        _renderTimer.Stop();
+
         if (_capture is not null)
         {
             _capture = null;
@@ -54,7 +59,9 @@ public partial class VisualizerWidget : UserControl, IBarWidget
 
     private void OnFrame(object? sender, EventArgs e)
     {
-        if (_capture is null) return;
+        if (_capture is null)
+            return;
+
         _capture.GetBands(_target);
 
         for (int i = 0; i < _display.Length; i++)

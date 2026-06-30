@@ -1,8 +1,8 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ============================================================
-         Palette BuffBar — esthétique Waybar / KDE Plasma
+         Palette BuffBar â€” esthÃ©tique Waybar / KDE Plasma
          Sobre, fond noir, texte blanc, encadrement gris.
          ============================================================ -->
 
@@ -19,7 +19,7 @@
     <SolidColorBrush x:Key="AccentBrush"        Color="#DDFF24"/>
 
     <!-- ============================================================
-         Typographie — JetBrainsMono Nerd Font (repli Consolas)
+         Typographie â€” JetBrainsMono Nerd Font (repli Consolas)
          ============================================================ -->
 
     <FontFamily x:Key="AppFont">JetBrainsMono Nerd Font, Consolas, monospace</FontFamily>
@@ -35,8 +35,31 @@
         <Setter Property="CornerRadius"    Value="6"/>
         <Setter Property="Padding"         Value="12,2"/>
         <Setter Property="Margin"          Value="4,6"/>
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Style.Triggers>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <!-- BUFFMYBAR_SPRINT003_MICRO_HOVER -->
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Setter.Value>
+        </Setter>
+                <Style.Triggers>
+            <EventTrigger RoutedEvent="MouseEnter">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.015" Duration="0:0:0.12"/>
+                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.015" Duration="0:0:0.12"/>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+            <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX" To="1" Duration="0:0:0.16"/>
+                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY" To="1" Duration="0:0:0.16"/>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background"  Value="{DynamicResource HoverBackground}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource HoverBorderBrush}"/>
@@ -58,7 +81,7 @@
          ============================================================ -->
 
     <!-- Fond du panneau : volontairement opaque et sombre, pour rester lisible
-         même quand la barre est en mode acrylique translucide. -->
+         mÃªme quand la barre est en mode acrylique translucide. -->
     <SolidColorBrush x:Key="FlyoutBackground" Color="#0C0C0C"/>
 
     <Style x:Key="FlyoutBorder" TargetType="Border">
@@ -67,7 +90,14 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius"    Value="10"/>
         <Setter Property="Padding"         Value="14"/>
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <!-- BUFFMYBAR_SPRINT003_MICRO_HOVER -->
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Effect">
             <Setter.Value>
                 <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55" Color="#000000"/>
@@ -118,7 +148,7 @@
         </Setter>
     </Style>
 
-    <!-- Bouton de navigation (mois précédent / suivant) -->
+    <!-- Bouton de navigation (mois prÃ©cÃ©dent / suivant) -->
     <Style x:Key="CalNavButton" TargetType="Button" BasedOn="{StaticResource CalDayButton}">
         <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
         <Setter Property="FontSize"   Value="14"/>

@@ -1,13 +1,12 @@
-<UserControl x:Class="BuffBar.Widgets.Visualizer.VisualizerWidget"
+﻿<UserControl x:Class="BuffBar.Widgets.Visualizer.VisualizerWidget"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viz="clr-namespace:BuffBar.Widgets.Visualizer"
-             VerticalAlignment="Stretch">
-
-    <Border Style="{StaticResource ModuleBorder}">
-        <viz:SpectrumView x:Name="Spectrum"
-                          Width="240"
-                          VerticalAlignment="Stretch"
-                          ClipToBounds="True"/>
-    </Border>
+             VerticalAlignment="Stretch"
+             Background="Transparent">
+    <viz:SpectrumView x:Name="Spectrum"
+                      Width="240"
+                      Margin="8,0"
+                      VerticalAlignment="Stretch"
+                      ClipToBounds="True"/>
 </UserControl>
