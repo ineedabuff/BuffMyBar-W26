@@ -104,7 +104,7 @@ public partial class NetworkWidget : UserControl, IBarWidget
             return;
         }
 
-        Ping.Text = ms.ToString(CultureInfo.InvariantCulture) + " ms";
+        WidgetAnimator.SetTextWithGlitch(Ping, ms.ToString(CultureInfo.InvariantCulture) + " ms");
         Ping.Foreground = ms < 60 ? PingGood : ms < 120 ? PingMid : PingBad;
     }
 

@@ -156,19 +156,23 @@ public partial class MainWindow : Window
 
         if (on)
         {
-            SetLocalBrush("BarBackground", 0xDD, 0xFF, 0x24);   // fond de barre = accent
-            SetLocalBrush("ModuleBackground", 0x00, 0x00, 0x00); // fonds de widgets noirs
-            SetLocalBrush("ModuleBorderBrush", 0x00, 0x00, 0x00);
-            SetLocalBrush("HoverBackground", 0x1E, 0x1E, 0x1E);
-            SetLocalBrush("HoverBorderBrush", 0x33, 0x33, 0x33);
-            SetLocalBrush("PrimaryText", 0xDD, 0xFF, 0x24);     // police = accent
-            SetLocalBrush("SubtleText", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("AccentBrush", 0xDD, 0xFF, 0x24);     // icônes = accent
+            // Sprint-006:
+            // Moniteur externe en mode accent = barre pleine #ddff24.
+            // Les modules se fondent dans la barre: aucun rectangle noir visible.
+            // Tout le texte, les icones et les accents deviennent noirs.
+            SetLocalBrush("BarBackground", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("ModuleBackground", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("ModuleBorderBrush", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("HoverBackground", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("HoverBorderBrush", 0xDD, 0xFF, 0x24);
+            SetLocalBrush("PrimaryText", 0x00, 0x00, 0x00);
+            SetLocalBrush("SubtleText", 0x00, 0x00, 0x00);
+            SetLocalBrush("AccentBrush", 0x00, 0x00, 0x00);
         }
         else
         {
             foreach (string k in AccentKeys)
-                Resources.Remove(k);   // retour aux pinceaux partagés (thème global)
+                Resources.Remove(k);
         }
     }
 

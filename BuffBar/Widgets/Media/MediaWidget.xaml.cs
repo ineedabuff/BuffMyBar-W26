@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using BuffBar.Core;
+using BuffBar.Effects;
 using BuffBar.Services;
 
 namespace BuffBar.Widgets.Media;
@@ -23,6 +24,8 @@ public partial class MediaWidget : UserControl, IBarWidget
     private readonly MediaService _media = new();
     private readonly DispatcherTimer _timer;
     private bool _busy;
+    private string? _lastTrack;   // dernière piste vue, pour détecter les changements
+    private bool? _lastPlaying;   // dernier état lecture/pause, pour détecter les bascules
 
     public string WidgetId => "media";
     public FrameworkElement View => this;
@@ -57,9 +60,23 @@ public partial class MediaWidget : UserControl, IBarWidget
 
             Root.Visibility = Visibility.Visible;
             Icon.Text = info.Playing ? Pause : Play;
-            Label.Text = string.IsNullOrWhiteSpace(info.Artist)
+
+            string track = string.IsNullOrWhiteSpace(info.Artist)
                 ? info.Title
                 : $"{info.Title} — {info.Artist}";
+            Label.Text = track;
+
+            // Onde de glitch (gauche -> droite) sur changement de chanson OU bascule
+            // lecture/pause. Détecté ici (et pas dans OnClick) pour couvrir aussi les
+            // touches média du clavier et les changements venus d'une autre appli.
+            // On ignore le tout premier chargement : c'est le reveal de démarrage.
+            bool first = _lastTrack is null && _lastPlaying is null;
+            bool trackChanged = _lastTrack is not null && !string.Equals(track, _lastTrack, StringComparison.Ordinal);
+            bool playChanged = _lastPlaying is not null && info.Playing != _lastPlaying;
+            _lastTrack = track;
+            _lastPlaying = info.Playing;
+            if (!first && (trackChanged || playChanged))
+                GlitchText.TriggerWave(this);
         }
         finally
         {

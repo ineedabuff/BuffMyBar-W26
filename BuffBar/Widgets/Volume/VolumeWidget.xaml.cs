@@ -10,22 +10,22 @@ using BuffBar.Services;
 namespace BuffBar.Widgets.Volume;
 
 /// <summary>
-/// Module volume : glyphe Nerd Font à trois paliers (muet / bas / haut) + pourcentage.
+/// Module volume : glyphe Nerd Font + pourcentage.
 /// Molette pour ajuster (pas de 2 %), clic gauche pour couper le son.
-/// Couleur par niveau : > 15 % en #FF3131, > 10 % en #ddff24, sinon blanc.
+/// Sprint-007:
+/// - 0 a 15 % = couleur normale.
+/// - 16 % et plus = rouge.
+/// - Muet = icone avec barre diagonale.
 /// </summary>
 public partial class VolumeWidget : UserControl, IBarWidget
 {
-    // Glyphes Font Awesome 4 (présents dans toutes les Nerd Fonts).
-    private const string Muted = "\uF026";  // volume-off (haut-parleur sans ondes)
-    private const string Low = "\uF027";  // volume-down
+    // Glyphes Font Awesome 4 (presents dans les Nerd Fonts).
+    private const string Muted = "\uF026"; // volume-off
+    private const string Low = "\uF027";   // volume-down
     private const string High = "\uF028";  // volume-up
 
-    // Paliers de couleur du volume
-    private static readonly Brush Accent = Frozen(0xDD, 0xFF, 0x24);
     private static readonly Brush Alert = Frozen(0xFF, 0x31, 0x31);
-
-    private const int Step = 2;  // pas de la molette en %
+    private const int Step = 2;
 
     private readonly VolumeController _controller = new();
     private readonly DispatcherTimer _timer;
@@ -60,13 +60,17 @@ public partial class VolumeWidget : UserControl, IBarWidget
         Root.Visibility = Visibility.Visible;
 
         string icon = v.Muted ? Muted : (v.Percent <= 50 ? Low : High);
-        Label.Text = $"{icon} {v.Percent}%";
+        IconLabel.Text = icon;
+        PercentLabel.Text = $"{v.Percent}%";
 
-        // Couleur : muet -> gris ; > 15 % -> rouge ; > 10 % -> accent ; sinon blanc.
-        Label.Foreground = v.Muted ? (Brush)FindResource("SubtleText")
-            : v.Percent > 15 ? Alert
-            : v.Percent > 10 ? Accent
+        // 0-15 % = normal. 16 % et plus = rouge. Muet = normal + slash.
+        Brush foreground = (!v.Muted && v.Percent >= 16)
+            ? Alert
             : (Brush)FindResource("PrimaryText");
+
+        IconLabel.Foreground = foreground;
+        PercentLabel.Foreground = foreground;
+        MutedSlash.Visibility = v.Muted ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static Brush Frozen(byte r, byte g, byte b)

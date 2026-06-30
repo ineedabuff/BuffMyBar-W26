@@ -8,10 +8,37 @@
             Style="{StaticResource ModuleBorder}"
             MouseWheel="OnMouseWheel"
             MouseLeftButtonUp="OnLeftClick"
-            ToolTip="Molette : volume — Clic : muet">
-        <TextBlock x:Name="Label"
-                   Style="{StaticResource ModuleText}"
-                   FontSize="13"
-                   HorizontalAlignment="Center"/>
+            ToolTip="Molette : volume â€” Clic : muet">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <Grid Width="17"
+                  Height="17"
+                  Margin="0,0,4,0"
+                  VerticalAlignment="Center">
+                <TextBlock x:Name="IconLabel"
+                           Style="{StaticResource ModuleText}"
+                           FontSize="13"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextAlignment="Center"/>
+
+                <!-- Sprint-007: slash visible seulement lorsque le volume est muet. -->
+                <Line x:Name="MutedSlash"
+                      X1="3" Y1="14"
+                      X2="14" Y2="3"
+                      Stroke="{Binding Foreground, ElementName=IconLabel}"
+                      StrokeThickness="2"
+                      StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round"
+                      Visibility="Collapsed"
+                      SnapsToDevicePixels="True"/>
+            </Grid>
+
+            <TextBlock x:Name="PercentLabel"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="13"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
     </Border>
 </UserControl>
