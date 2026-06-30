@@ -1,0 +1,23 @@
+## Build artefacts .NET
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+*.user
+*.suo
+*.cache
+
+## Inno Setup output
+/Output/
+Buffmybar-W26-Setup*.exe
+
+## IDE
+.vs/
+.vscode/
+*.swp
+
+## Secrets locaux (jamais versionnés)
+google_token.json
+
+## Binaires de sortie (historiquement versionnés par erreur)
+installer/*.exe
+publish/

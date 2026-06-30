@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuffBar", "BuffBar\BuffBar.csproj", "{B7A4F0C2-1E3D-4A6B-9C2E-5F8D7A1B2C3D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuffBar.Tests", "BuffBar.Tests\BuffBar.Tests.csproj", "{C8B5E1D3-2F4A-4B7C-8D3E-6A9F8B2C3D4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,5 +16,9 @@ Global
 		{B7A4F0C2-1E3D-4A6B-9C2E-5F8D7A1B2C3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7A4F0C2-1E3D-4A6B-9C2E-5F8D7A1B2C3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7A4F0C2-1E3D-4A6B-9C2E-5F8D7A1B2C3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8B5E1D3-2F4A-4B7C-8D3E-6A9F8B2C3D4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8B5E1D3-2F4A-4B7C-8D3E-6A9F8B2C3D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8B5E1D3-2F4A-4B7C-8D3E-6A9F8B2C3D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8B5E1D3-2F4A-4B7C-8D3E-6A9F8B2C3D4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

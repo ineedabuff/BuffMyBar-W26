@@ -18,4 +18,9 @@
     <TieredCompilation>true</TieredCompilation>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Donne accès aux types internes (ex. Fft) au projet de tests. -->
+    <InternalsVisibleTo Include="BuffBar.Tests" />
+  </ItemGroup>
+
 </Project>

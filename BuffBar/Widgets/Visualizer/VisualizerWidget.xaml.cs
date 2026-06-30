@@ -17,7 +17,7 @@ public partial class VisualizerWidget : UserControl, IBarWidget
     private const float Attack = 0.55f;  // montée (plus haut = plus vif)
     private const float Decay = 0.10f;  // descente (plus bas = retombée plus douce)
 
-    private readonly AudioCapture _capture = new();
+    private AudioCapture? _capture;
     private readonly float[] _target = new float[AudioCapture.Bands];
     private readonly float[] _display = new float[AudioCapture.Bands];
 
@@ -33,18 +33,28 @@ public partial class VisualizerWidget : UserControl, IBarWidget
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _capture.Start();
+        // Loaded comme Unloaded peuvent se déclencher plusieurs fois : on n'acquiert
+        // qu'une seule référence à la fois (symétrique de OnUnloaded).
+        _capture ??= SharedAudioCapture.Acquire();
+        CompositionTarget.Rendering -= OnFrame;
         CompositionTarget.Rendering += OnFrame;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         CompositionTarget.Rendering -= OnFrame;
-        _capture.Stop();
+        // Unloaded peut se déclencher plusieurs fois (recomposition de l'arbre) :
+        // on ne libère qu'une fois la référence réellement détenue.
+        if (_capture is not null)
+        {
+            _capture = null;
+            SharedAudioCapture.Release();
+        }
     }
 
     private void OnFrame(object? sender, EventArgs e)
     {
+        if (_capture is null) return;
         _capture.GetBands(_target);
 
         for (int i = 0; i < _display.Length; i++)

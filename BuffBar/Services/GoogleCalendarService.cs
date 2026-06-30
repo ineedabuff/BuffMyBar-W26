@@ -306,8 +306,20 @@ public static class GoogleCalendarService
     {
         try
         {
-            if (File.Exists(TokenPath))
-                return JsonSerializer.Deserialize<TokenData>(File.ReadAllText(TokenPath), J);
+            if (!File.Exists(TokenPath)) return null;
+
+            byte[] raw = File.ReadAllBytes(TokenPath);
+
+            // Token chiffré DPAPI (format actuel).
+            byte[]? plain = Interop.Dpapi.Unprotect(raw);
+            if (plain is not null)
+                return JsonSerializer.Deserialize<TokenData>(plain, J);
+
+            // Migration douce : ancien token en clair (JSON brut). On le lit une
+            // fois, puis on le ré-enregistre chiffré au prochain SaveToken.
+            var migrated = JsonSerializer.Deserialize<TokenData>(raw, J);
+            if (migrated is not null) SaveToken(migrated);
+            return migrated;
         }
         catch { /* ignore */ }
         return null;
@@ -315,7 +327,13 @@ public static class GoogleCalendarService
 
     private static void SaveToken(TokenData t)
     {
-        try { File.WriteAllText(TokenPath, JsonSerializer.Serialize(t, J)); }
+        try
+        {
+            byte[] plain = JsonSerializer.SerializeToUtf8Bytes(t, J);
+            byte[]? enc = Interop.Dpapi.Protect(plain);
+            // Repli en clair uniquement si DPAPI échoue (ne devrait pas arriver).
+            File.WriteAllBytes(TokenPath, enc ?? plain);
+        }
         catch { /* ignore */ }
     }
 
