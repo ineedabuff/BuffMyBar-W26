@@ -1,0 +1,27 @@
+<UserControl x:Class="BuffBar.Widgets.SystemIndicators.SystemIndicatorsWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             VerticalAlignment="Stretch">
+
+    <Border x:Name="Root"
+            Style="{StaticResource ModuleBorder}"
+            ToolTip="Indicateurs système">
+        <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center">
+
+            <TextBlock x:Name="CpuLabel"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Margin="0,0,10,0"/>
+
+            <TextBlock x:Name="RamLabel"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"
+                       Margin="0,0,10,0"/>
+
+            <TextBlock x:Name="GpuLabel"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="12"/>
+        </StackPanel>
+    </Border>
+</UserControl>

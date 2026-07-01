@@ -39,3 +39,8 @@ Sprint-*.zip
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Artefacts de build
+publish/
+installer/*.exe
+*.pdb

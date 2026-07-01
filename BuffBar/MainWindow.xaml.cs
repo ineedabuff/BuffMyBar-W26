@@ -12,6 +12,7 @@ using BuffBar.Widgets.Clock;
 using BuffBar.Widgets.Media;
 using BuffBar.Widgets.Network;
 using BuffBar.Widgets.Obs;
+using BuffBar.Widgets.SystemIndicators;
 using BuffBar.Widgets.Uptime;
 using BuffBar.Widgets.Visualizer;
 using BuffBar.Widgets.Volume;
@@ -83,6 +84,7 @@ public partial class MainWindow : Window
         if (w.Media) LeftRegion.Children.Add(new MediaWidget());
 
         // Droite — alignée à droite (ajout = gauche -> droite)
+        RightRegion.Children.Add(new SystemIndicatorsWidget());
         if (w.Visualizer) RightRegion.Children.Add(new VisualizerWidget());
         if (w.Volume) RightRegion.Children.Add(new VolumeWidget());
         if (w.Bluetooth) RightRegion.Children.Add(new BluetoothWidget());
