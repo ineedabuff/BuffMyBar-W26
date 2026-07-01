@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace BuffBar.Services;
@@ -7,18 +8,22 @@ namespace BuffBar.Services;
 /// Lightweight system metrics used by the System Indicators widget.
 /// No external dependencies, no NuGet packages.
 /// </summary>
-public sealed class SystemMetricsService
+public sealed class SystemMetricsService : IDisposable
 {
     private CpuSample? _lastCpuSample;
+    private readonly GpuUsageReader _gpu = new();
 
     public SystemMetricsSnapshot Read()
     {
         int? cpu = ReadCpuPercent();
         int? ram = ReadRamPercent();
-        int? gpu = ReadGpuPercent();
+        int? gpu = _gpu.ReadGpuPercent();
 
         return new SystemMetricsSnapshot(cpu, ram, gpu);
     }
+
+    public void Dispose()
+        => _gpu.Dispose();
 
     private int? ReadCpuPercent()
     {
@@ -52,23 +57,16 @@ public sealed class SystemMetricsService
 
     private static int? ReadRamPercent()
     {
-        var status = new MEMORYSTATUSEX();
-        status.dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>();
+        var status = new MEMORYSTATUSEX
+        {
+            dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>()
+        };
 
         if (!GlobalMemoryStatusEx(ref status))
             return null;
 
         return ClampPercent((int)status.dwMemoryLoad);
     }
-
-    /// <summary>
-    /// GPU usage is intentionally conservative for now.
-    /// Windows exposes GPU counters through performance counters / WMI providers that
-    /// are not always present and may require extra framework packages.
-    /// Returning null keeps the widget hidden instead of showing unreliable data.
-    /// </summary>
-    private static int? ReadGpuPercent()
-        => null;
 
     private static int ClampPercent(int value)
         => Math.Max(0, Math.Min(100, value));
@@ -107,6 +105,179 @@ public sealed class SystemMetricsService
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
+
+    /// <summary>
+    /// Reads Windows GPU Engine counters through PDH.
+    ///
+    /// On hybrid laptops, Windows exposes per-engine GPU counters. The instance name
+    /// does not reliably expose the vendor name, so the reader uses the most active
+    /// 3D engine as the displayed GPU value. In practice, when the dGPU is active
+    /// for games or rendering workloads, that engine is the one that surfaces here.
+    /// If the counters are unavailable, the value remains hidden.
+    /// </summary>
+    private sealed class GpuUsageReader : IDisposable
+    {
+        private const uint ERROR_SUCCESS = 0;
+        private const uint PDH_MORE_DATA = 0x800007D2;
+        private const uint PDH_FMT_DOUBLE = 0x00000200;
+        private const string GpuCounterPath = @"\GPU Engine(*)\Utilization Percentage";
+
+        private IntPtr _query;
+        private IntPtr _counter;
+        private bool _initialized;
+        private bool _disposed;
+        private bool _hasFirstSample;
+
+        public int? ReadGpuPercent()
+        {
+            if (_disposed)
+                return null;
+
+            if (!_initialized && !Initialize())
+                return null;
+
+            uint collectStatus = PdhCollectQueryData(_query);
+            if (collectStatus != ERROR_SUCCESS)
+                return null;
+
+            // PDH counters need one warm-up sample before a useful formatted value.
+            if (!_hasFirstSample)
+            {
+                _hasFirstSample = true;
+                return null;
+            }
+
+            uint bufferSize = 0;
+            uint itemCount = 0;
+            uint status = PdhGetFormattedCounterArray(
+                _counter,
+                PDH_FMT_DOUBLE,
+                ref bufferSize,
+                ref itemCount,
+                IntPtr.Zero);
+
+            if (status != PDH_MORE_DATA || bufferSize == 0 || itemCount == 0)
+                return null;
+
+            IntPtr buffer = Marshal.AllocHGlobal((int)bufferSize);
+            try
+            {
+                status = PdhGetFormattedCounterArray(
+                    _counter,
+                    PDH_FMT_DOUBLE,
+                    ref bufferSize,
+                    ref itemCount,
+                    buffer);
+
+                if (status != ERROR_SUCCESS)
+                    return null;
+
+                double max3D = 0;
+                int structSize = Marshal.SizeOf<PDH_FMT_COUNTERVALUE_ITEM_DOUBLE>();
+
+                for (int i = 0; i < itemCount; i++)
+                {
+                    IntPtr itemPtr = IntPtr.Add(buffer, i * structSize);
+                    var item = Marshal.PtrToStructure<PDH_FMT_COUNTERVALUE_ITEM_DOUBLE>(itemPtr);
+                    string instance = Marshal.PtrToStringUni(item.szName) ?? string.Empty;
+
+                    if (!Is3DEngine(instance))
+                        continue;
+
+                    if ((item.FmtValue.CStatus & 0xC0000000) != 0)
+                        continue;
+
+                    if (double.IsNaN(item.FmtValue.doubleValue) || double.IsInfinity(item.FmtValue.doubleValue))
+                        continue;
+
+                    max3D = Math.Max(max3D, item.FmtValue.doubleValue);
+                }
+
+                if (max3D <= 0.0)
+                    return null;
+
+                return ClampPercent((int)Math.Round(max3D));
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
+
+        private static bool Is3DEngine(string instance)
+            => instance.IndexOf("engtype_3D", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        private bool Initialize()
+        {
+            if (PdhOpenQuery(null, UIntPtr.Zero, out _query) != ERROR_SUCCESS)
+                return false;
+
+            if (PdhAddEnglishCounter(_query, GpuCounterPath, UIntPtr.Zero, out _counter) != ERROR_SUCCESS)
+            {
+                Dispose();
+                return false;
+            }
+
+            _initialized = true;
+            return true;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
+            if (_query != IntPtr.Zero)
+            {
+                PdhCloseQuery(_query);
+                _query = IntPtr.Zero;
+                _counter = IntPtr.Zero;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PDH_FMT_COUNTERVALUE_ITEM_DOUBLE
+        {
+            public IntPtr szName;
+            public PDH_FMT_COUNTERVALUE_DOUBLE FmtValue;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PDH_FMT_COUNTERVALUE_DOUBLE
+        {
+            public uint CStatus;
+            public double doubleValue;
+        }
+
+        [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+        private static extern uint PdhOpenQuery(
+            string? szDataSource,
+            UIntPtr dwUserData,
+            out IntPtr phQuery);
+
+        [DllImport("pdh.dll", CharSet = CharSet.Unicode)]
+        private static extern uint PdhAddEnglishCounter(
+            IntPtr hQuery,
+            string szFullCounterPath,
+            UIntPtr dwUserData,
+            out IntPtr phCounter);
+
+        [DllImport("pdh.dll")]
+        private static extern uint PdhCollectQueryData(IntPtr hQuery);
+
+        [DllImport("pdh.dll", CharSet = CharSet.Unicode, EntryPoint = "PdhGetFormattedCounterArrayW")]
+        private static extern uint PdhGetFormattedCounterArray(
+            IntPtr hCounter,
+            uint dwFormat,
+            ref uint lpdwBufferSize,
+            ref uint lpdwItemCount,
+            IntPtr ItemBuffer);
+
+        [DllImport("pdh.dll")]
+        private static extern uint PdhCloseQuery(IntPtr hQuery);
+    }
 }
 
 public readonly record struct SystemMetricsSnapshot(int? CpuPercent, int? RamPercent, int? GpuPercent);

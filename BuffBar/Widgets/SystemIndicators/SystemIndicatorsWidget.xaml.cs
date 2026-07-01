@@ -10,17 +10,26 @@ namespace BuffBar.Widgets.SystemIndicators;
 /// <summary>
 /// Compact CPU / RAM / GPU indicators.
 /// Values that cannot be detected are hidden automatically.
+/// The widget is intentionally shown only on external monitors.
 /// </summary>
 public partial class SystemIndicatorsWidget : UserControl, IBarWidget
 {
     private readonly SystemMetricsService _metrics = new();
     private readonly DispatcherTimer _timer;
+    private readonly bool _showOnThisMonitor;
 
     public string WidgetId => "system-indicators";
     public FrameworkElement View => this;
 
     public SystemIndicatorsWidget()
+        : this(false)
     {
+    }
+
+    public SystemIndicatorsWidget(bool isExternalMonitor)
+    {
+        _showOnThisMonitor = isExternalMonitor;
+
         InitializeComponent();
 
         _timer = new DispatcherTimer(DispatcherPriority.Background)
@@ -31,15 +40,31 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
 
         Loaded += (_, _) =>
         {
+            if (!_showOnThisMonitor)
+            {
+                Root.Visibility = Visibility.Collapsed;
+                return;
+            }
+
             Refresh();
             _timer.Start();
         };
 
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) =>
+        {
+            _timer.Stop();
+            _metrics.Dispose();
+        };
     }
 
     private void Refresh()
     {
+        if (!_showOnThisMonitor)
+        {
+            Root.Visibility = Visibility.Collapsed;
+            return;
+        }
+
         SystemMetricsSnapshot snapshot = _metrics.Read();
 
         bool cpuVisible = ApplyMetric(CpuLabel, "CPU", snapshot.CpuPercent);
