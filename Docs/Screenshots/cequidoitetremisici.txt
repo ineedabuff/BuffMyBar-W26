@@ -1,0 +1,8 @@
+├── Screenshots/
+│   ├── Desktop-Dark.png
+│   ├── Desktop-Light.png
+│   ├── External-Monitor.png
+│   ├── Windows-Theme.png
+│   ├── Visualizer.png
+│   ├── OBS.png
+│   └── Settings.png
