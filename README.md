@@ -145,13 +145,15 @@ cd BuffMyBar-W26
 dotnet build
 
 dotnet run --project BuffBar
-```---
+```
+
+---
 
 # Architecture
 
 BuffMyBar is built around independent services.
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │                BuffMyBar                    │
 ├─────────────────────────────────────────────┤
@@ -164,7 +166,7 @@ BuffMyBar is built around independent services.
 │ Glitch │ Fade │ Spawn │ Scan │ Typewriter   │
 ├─────────────────────────────────────────────┤
 │             Theme Manager                   │
-│ Buff │ Windows │ Future Themes             │
+│ Buff │ Windows │ Future Themes              │
 ├─────────────────────────────────────────────┤
 │         Windows Theme Service               │
 ├─────────────────────────────────────────────┤
