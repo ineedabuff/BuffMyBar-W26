@@ -31,9 +31,12 @@ public static class WindowsThemeService
 
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
+        // UserPreferenceChanged capte la plupart des bascules clair/sombre en
+        // direct ; ce sondage de repli sert surtout aux changements de couleur
+        // d'accent. 5 s au lieu de 2 s : moins de réveils CPU sur portable.
         _poller = new DispatcherTimer(DispatcherPriority.Background)
         {
-            Interval = TimeSpan.FromSeconds(2)
+            Interval = TimeSpan.FromSeconds(5)
         };
         _poller.Tick += (_, _) => Refresh();
         _poller.Start();

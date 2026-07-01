@@ -75,7 +75,7 @@
         <!-- Décryptage « glitch » à l'apparition de la barre (effet jh3y porté en WPF).
              Le texte passe en accent #ddff24 pendant le scramble puis reprend sa couleur. -->
         <Setter Property="fx:GlitchText.RevealOnLoad" Value="True"/>
-        <Setter Property="fx:GlitchText.AccentWhileGlitching" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="fx:GlitchText.AccentWhileGlitching" Value="{DynamicResource AccentBrush}"/>
         <!-- Participe à l'onde de glitch déclenchée au changement de chanson. -->
         <Setter Property="fx:GlitchText.WaveMember" Value="True"/>
     </Style>
@@ -84,13 +84,15 @@
          Flyouts / applets (popups ouverts au clic sur un module)
          ============================================================ -->
 
-    <!-- Fond du panneau : volontairement opaque et sombre, pour rester lisible
-         mÃªme quand la barre est en mode acrylique translucide. -->
+    <!-- Fond du panneau : suit le thème (ModuleBackground) pour rester cohérent
+         avec la couleur du texte. En thème buff il reste #000000 opaque ; en thème
+         Windows clair il devient clair -> le texte du thème redevient lisible.
+         Opaque dans tous les cas : lisible même quand la barre est acrylique. -->
     <SolidColorBrush x:Key="FlyoutBackground" Color="#0C0C0C"/>
 
     <Style x:Key="FlyoutBorder" TargetType="Border">
-        <Setter Property="Background"      Value="{StaticResource FlyoutBackground}"/>
-        <Setter Property="BorderBrush"     Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource ModuleBackground}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius"    Value="10"/>
         <Setter Property="Padding"         Value="14"/>
@@ -112,7 +114,7 @@
     <Style x:Key="FlyoutHeading" TargetType="TextBlock" BasedOn="{StaticResource ModuleText}">
         <Setter Property="fx:GlitchText.RevealOnLoad" Value="False"/>
         <Setter Property="fx:GlitchText.WaveMember" Value="False"/>
-        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize"   Value="14"/>
     </Style>
@@ -126,13 +128,13 @@
     <Style x:Key="FlyoutSubtle" TargetType="TextBlock" BasedOn="{StaticResource ModuleText}">
         <Setter Property="fx:GlitchText.RevealOnLoad" Value="False"/>
         <Setter Property="fx:GlitchText.WaveMember" Value="False"/>
-        <Setter Property="Foreground" Value="{StaticResource SubtleText}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtleText}"/>
         <Setter Property="FontSize"   Value="11"/>
     </Style>
 
     <!-- Bouton plat (jour de calendrier) -->
     <Style x:Key="CalDayButton" TargetType="Button">
-        <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
         <Setter Property="FontSize"   Value="12"/>
@@ -150,7 +152,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="{StaticResource HoverBackground}"/>
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource HoverBackground}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -160,7 +162,7 @@
 
     <!-- Bouton de navigation (mois prÃ©cÃ©dent / suivant) -->
     <Style x:Key="CalNavButton" TargetType="Button" BasedOn="{StaticResource CalDayButton}">
-        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="FontSize"   Value="14"/>
         <Setter Property="Width"      Value="28"/>
     </Style>

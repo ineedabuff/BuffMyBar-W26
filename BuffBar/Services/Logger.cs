@@ -5,7 +5,7 @@ namespace BuffBar.Services;
 
 /// <summary>
 /// Journal de diagnostic simple, écrit dans
-/// %LOCALAPPDATA%\BuffBar\buffbar.log (réinitialisé à chaque lancement).
+/// %AppData%\BuffMyBar-W26\logs\buffbar.log (réinitialisé à chaque lancement).
 /// Thread-safe, silencieux en cas d'échec d'écriture.
 /// </summary>
 public static class Logger

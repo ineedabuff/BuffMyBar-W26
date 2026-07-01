@@ -51,9 +51,10 @@ public static class GlitchText
         public DispatcherTimer? Timer;
         public DependencyPropertyDescriptor? TextDescriptor;
         public EventHandler? TextHandler;
-        public bool Suppress;        // ignore nos propres écritures de Text
-        public bool Revealed;        // RevealOnLoad : déjà joué une fois ?
-        public Brush? OriginalBrush; // couleur à restaurer après le glitch
+        public bool Suppress;         // ignore nos propres écritures de Text
+        public bool Revealed;         // RevealOnLoad : déjà joué une fois ?
+        public Brush? OriginalBrush;  // couleur à restaurer après le glitch
+        public bool ForegroundWasLocal; // la couleur d'origine venait-elle d'une valeur locale ?
     }
 
     private static readonly ConditionalWeakTable<TextBlock, State> States = new();
@@ -271,7 +272,16 @@ public static class GlitchText
         Brush? accent = GetAccentWhileGlitching(tb);
         if (accent is not null)
         {
-            st.OriginalBrush ??= tb.Foreground;
+            if (st.OriginalBrush is null)
+            {
+                // On mémorise la SOURCE de la couleur d'origine : locale (posée en
+                // code-behind : ping, volume, OBS…) ou héritée du style/thème
+                // (DynamicResource). C'est ce qui permet de rendre la main au thème
+                // à la fin du glitch au lieu de figer une couleur périmée.
+                var source = DependencyPropertyHelper.GetValueSource(tb, TextBlock.ForegroundProperty);
+                st.ForegroundWasLocal = source.BaseValueSource == BaseValueSource.Local;
+                st.OriginalBrush = tb.Foreground;
+            }
             tb.Foreground = accent;
         }
 
@@ -339,10 +349,24 @@ public static class GlitchText
 
     private static void RestoreBrush(TextBlock tb, State st)
     {
-        if (st.OriginalBrush is not null)
+        if (st.OriginalBrush is null) return;
+
+        if (st.ForegroundWasLocal)
         {
+            // La couleur d'origine était posée localement (ex. tiers de volume,
+            // rouge d'enregistrement OBS) : on la remet telle quelle.
             tb.Foreground = st.OriginalBrush;
-            st.OriginalBrush = null;
         }
+        else
+        {
+            // La couleur venait du style/thème : on efface la valeur locale posée
+            // par le glitch pour que le {DynamicResource PrimaryText} du thème
+            // reprenne la main. Sans ça, le texte reste figé sur l'ancienne couleur
+            // et devient illisible après un passage au thème Windows.
+            tb.ClearValue(TextBlock.ForegroundProperty);
+        }
+
+        st.OriginalBrush = null;
+        st.ForegroundWasLocal = false;
     }
 }
