@@ -12,14 +12,16 @@ public sealed class SystemMetricsService : IDisposable
 {
     private CpuSample? _lastCpuSample;
     private readonly GpuUsageReader _gpu = new();
+    private readonly CpuTemperatureReader _cpuTemperature = new();
 
     public SystemMetricsSnapshot Read()
     {
         int? cpu = ReadCpuPercent();
         int? ram = ReadRamPercent();
         int? gpu = _gpu.ReadGpuPercent();
+        int? cpuTemperature = _cpuTemperature.ReadCelsius();
 
-        return new SystemMetricsSnapshot(cpu, ram, gpu);
+        return new SystemMetricsSnapshot(cpu, ram, gpu, cpuTemperature);
     }
 
     public void Dispose()
@@ -105,6 +107,64 @@ public sealed class SystemMetricsService : IDisposable
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
+
+    /// <summary>
+    /// Reads CPU temperature through the native WMI COM provider when available.
+    ///
+    /// Many laptops do not expose a real CPU package temperature through Windows'
+    /// built-in ACPI thermal zone. When unavailable, the value remains null and the
+    /// widget simply displays CPU usage without a temperature suffix.
+    /// </summary>
+    private sealed class CpuTemperatureReader
+    {
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(10);
+
+        private DateTime _lastReadUtc = DateTime.MinValue;
+        private int? _cachedTemperature;
+
+        public int? ReadCelsius()
+        {
+            DateTime now = DateTime.UtcNow;
+            if (now - _lastReadUtc < CacheDuration)
+                return _cachedTemperature;
+
+            _lastReadUtc = now;
+            _cachedTemperature = TryReadCelsius();
+            return _cachedTemperature;
+        }
+
+        private static int? TryReadCelsius()
+        {
+            try
+            {
+                Type? locatorType = Type.GetTypeFromProgID("WbemScripting.SWbemLocator");
+                if (locatorType is null)
+                    return null;
+
+                dynamic? locator = Activator.CreateInstance(locatorType);
+                if (locator is null)
+                    return null;
+
+                dynamic services = locator.ConnectServer(".", @"root\WMI");
+                dynamic results = services.ExecQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
+
+                foreach (dynamic item in results)
+                {
+                    double raw = Convert.ToDouble(item.CurrentTemperature);
+                    int celsius = (int)Math.Round(raw / 10.0 - 273.15);
+
+                    if (celsius > 0 && celsius < 125)
+                        return celsius;
+                }
+            }
+            catch
+            {
+                // Not all systems expose this WMI class. Null is the expected fallback.
+            }
+
+            return null;
+        }
+    }
 
     /// <summary>
     /// Reads Windows GPU Engine counters through PDH.
@@ -280,4 +340,8 @@ public sealed class SystemMetricsService : IDisposable
     }
 }
 
-public readonly record struct SystemMetricsSnapshot(int? CpuPercent, int? RamPercent, int? GpuPercent);
+public readonly record struct SystemMetricsSnapshot(
+    int? CpuPercent,
+    int? RamPercent,
+    int? GpuPercent,
+    int? CpuTemperatureCelsius);
