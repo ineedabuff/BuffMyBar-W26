@@ -16,6 +16,7 @@ public sealed class SystemMetricsService : IDisposable
     private CpuSample? _lastCpuSample;
     private readonly GpuUsageReader _gpu = new();
     private readonly CpuTemperatureReader _cpuTemperature = new();
+    private readonly SensorDiagnosticsService _diagnostics = new();
     private bool _disposed;
 
     public SystemMetricsSnapshot Read()
@@ -26,6 +27,7 @@ public sealed class SystemMetricsService : IDisposable
         int? cpu = ReadCpuPercent();
         int? ram = ReadRamPercent();
         int? gpu = _gpu.ReadGpuPercent();
+        _diagnostics.CaptureOnce();
         int? cpuTemperature = _cpuTemperature.ReadCelsius();
 
         return new SystemMetricsSnapshot(cpu, ram, gpu, cpuTemperature);
@@ -39,6 +41,7 @@ public sealed class SystemMetricsService : IDisposable
         _disposed = true;
         _gpu.Dispose();
         _cpuTemperature.Dispose();
+        _diagnostics.Dispose();
     }
 
     private int? ReadCpuPercent()
