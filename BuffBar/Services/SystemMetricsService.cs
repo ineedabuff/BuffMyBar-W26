@@ -1,21 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using LibreHardwareMonitor.Hardware;
 
 namespace BuffBar.Services;
 
 /// <summary>
 /// Lightweight system metrics used by the System Indicators widget.
-/// No external dependencies, no NuGet packages.
+/// CPU/RAM/GPU stay native/lightweight; CPU temperature is read through
+/// LibreHardwareMonitor when available, with a safe null fallback.
 /// </summary>
 public sealed class SystemMetricsService : IDisposable
 {
     private CpuSample? _lastCpuSample;
     private readonly GpuUsageReader _gpu = new();
     private readonly CpuTemperatureReader _cpuTemperature = new();
+    private bool _disposed;
 
     public SystemMetricsSnapshot Read()
     {
+        if (_disposed)
+            return default;
+
         int? cpu = ReadCpuPercent();
         int? ram = ReadRamPercent();
         int? gpu = _gpu.ReadGpuPercent();
@@ -25,7 +32,14 @@ public sealed class SystemMetricsService : IDisposable
     }
 
     public void Dispose()
-        => _gpu.Dispose();
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        _gpu.Dispose();
+        _cpuTemperature.Dispose();
+    }
 
     private int? ReadCpuPercent()
     {
@@ -109,21 +123,27 @@ public sealed class SystemMetricsService : IDisposable
     private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
 
     /// <summary>
-    /// Reads CPU temperature through the native WMI COM provider when available.
+    /// Reads CPU package temperature through LibreHardwareMonitor.
     ///
-    /// Many laptops do not expose a real CPU package temperature through Windows'
-    /// built-in ACPI thermal zone. When unavailable, the value remains null and the
-    /// widget simply displays CPU usage without a temperature suffix.
+    /// The reader is cached to avoid polling sensors too often. If the current
+    /// hardware/driver stack does not expose CPU sensors, it returns null and
+    /// the widget keeps displaying CPU usage without a temperature suffix.
     /// </summary>
-    private sealed class CpuTemperatureReader
+    private sealed class CpuTemperatureReader : IDisposable
     {
-        private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(5);
 
+        private Computer? _computer;
         private DateTime _lastReadUtc = DateTime.MinValue;
         private int? _cachedTemperature;
+        private bool _failed;
+        private bool _disposed;
 
         public int? ReadCelsius()
         {
+            if (_disposed || _failed)
+                return null;
+
             DateTime now = DateTime.UtcNow;
             if (now - _lastReadUtc < CacheDuration)
                 return _cachedTemperature;
@@ -133,36 +153,104 @@ public sealed class SystemMetricsService : IDisposable
             return _cachedTemperature;
         }
 
-        private static int? TryReadCelsius()
+        private int? TryReadCelsius()
         {
             try
             {
-                Type? locatorType = Type.GetTypeFromProgID("WbemScripting.SWbemLocator");
-                if (locatorType is null)
+                Computer computer = EnsureComputer();
+
+                foreach (IHardware hardware in computer.Hardware)
+                    hardware.Update();
+
+                List<ISensor> temperatureSensors = computer.Hardware
+                    .Where(h => h.HardwareType == HardwareType.Cpu)
+                    .SelectMany(FlattenHardware)
+                    .SelectMany(h => h.Sensors)
+                    .Where(s => s.SensorType == SensorType.Temperature && s.Value.HasValue)
+                    .ToList();
+
+                if (temperatureSensors.Count == 0)
                     return null;
 
-                dynamic? locator = Activator.CreateInstance(locatorType);
-                if (locator is null)
-                    return null;
+                ISensor? preferred =
+                    temperatureSensors.FirstOrDefault(IsPreferredCpuPackageSensor) ??
+                    temperatureSensors.FirstOrDefault(s => s.Name.Contains("Package", StringComparison.OrdinalIgnoreCase)) ??
+                    temperatureSensors.FirstOrDefault(s => s.Name.Contains("Tctl", StringComparison.OrdinalIgnoreCase)) ??
+                    temperatureSensors.FirstOrDefault(s => s.Name.Contains("CCD", StringComparison.OrdinalIgnoreCase));
 
-                dynamic services = locator.ConnectServer(".", @"root\WMI");
-                dynamic results = services.ExecQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
+                float value = preferred?.Value
+                    ?? temperatureSensors.Max(s => s.Value ?? 0);
 
-                foreach (dynamic item in results)
-                {
-                    double raw = Convert.ToDouble(item.CurrentTemperature);
-                    int celsius = (int)Math.Round(raw / 10.0 - 273.15);
+                int celsius = (int)Math.Round(value);
 
-                    if (celsius > 0 && celsius < 125)
-                        return celsius;
-                }
+                return celsius is > 0 and < 125
+                    ? celsius
+                    : null;
             }
             catch
             {
-                // Not all systems expose this WMI class. Null is the expected fallback.
+                _failed = true;
+                return null;
+            }
+        }
+
+        private Computer EnsureComputer()
+        {
+            if (_computer is not null)
+                return _computer;
+
+            _computer = new Computer
+            {
+                IsCpuEnabled = true,
+                IsMotherboardEnabled = false,
+                IsMemoryEnabled = false,
+                IsGpuEnabled = false,
+                IsStorageEnabled = false,
+                IsNetworkEnabled = false,
+                IsControllerEnabled = false
+            };
+
+            _computer.Open();
+            return _computer;
+        }
+
+        private static IEnumerable<IHardware> FlattenHardware(IHardware hardware)
+        {
+            yield return hardware;
+
+            foreach (IHardware subHardware in hardware.SubHardware)
+            {
+                foreach (IHardware flattened in FlattenHardware(subHardware))
+                    yield return flattened;
+            }
+        }
+
+        private static bool IsPreferredCpuPackageSensor(ISensor sensor)
+        {
+            string name = sensor.Name;
+
+            return name.Equals("CPU Package", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("Core Max", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Package", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
+            try
+            {
+                _computer?.Close();
+            }
+            catch
+            {
+                // Best-effort cleanup only.
             }
 
-            return null;
+            _computer = null;
         }
     }
 
