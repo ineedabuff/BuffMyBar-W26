@@ -17,6 +17,9 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - GitHub CI/CD pipeline.
 - Automatic Windows Light/Dark mode detection.
 - Dynamic Windows accent color support.
+- CPU temperature support through an optional elevated startup task.
+- Installer opt-in for elevated sensor access.
+- Clean scheduled task removal during uninstall.
 
 ### Changed
 
@@ -26,6 +29,8 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - Cleaner widget spacing.
 - Improved external monitor theme.
 - Updated project documentation.
+- AutoStartService now avoids Run key registration when the elevated startup task exists.
+- Sensor diagnostics log path moved to `%AppData%\BuffMyBar-W26\logs`.
 
 ### Fixed
 
