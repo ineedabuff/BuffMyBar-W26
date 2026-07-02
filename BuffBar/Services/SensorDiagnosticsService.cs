@@ -18,8 +18,8 @@ namespace BuffBar.Services;
 /// - avoid guessing CPU/GPU temperature sensor names;
 /// - write a readable log under LocalAppData without crashing the bar.
 ///
-/// Log path:
-/// %LOCALAPPDATA%\BuffMyBar-W26\logs\sensors.log
+/// Log path (même dossier que settings.json / buffbar.log) :
+/// %AppData%\BuffMyBar-W26\logs\sensors.log
 /// </summary>
 public sealed class SensorDiagnosticsService : IDisposable
 {
@@ -29,7 +29,7 @@ public sealed class SensorDiagnosticsService : IDisposable
     private bool _disposed;
 
     public string LogPath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "BuffMyBar-W26",
         "logs",
         "sensors.log");

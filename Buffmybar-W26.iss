@@ -1,4 +1,4 @@
-; ============================================================
+﻿; ============================================================
 ;  Buffmybar-W26 — script d'installateur Inno Setup
 ;  Génère : installer\Buffmybar-W26.exe
 ;  Prérequis : Inno Setup 6 (https://jrsoftware.org/isdl.php)
@@ -34,10 +34,16 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Créer un raccourci sur le Bureau"; Flags: unchecked
+; Fonctionnalité température CPU : nécessite une tâche planifiée ÉLEVÉE
+; (LibreHardwareMonitor lit les MSR via un pilote noyau -> admin requis).
+; Cochée = une invite UAC pendant l'installation. Décochée = pas de température.
+Name: "cputemp"; Description: "Lecture de la température CPU (démarrage élevé, une invite UAC)"
 
 [Files]
 ; Contenu publié par make-installer.bat (dossier publish\)
 Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+; Script de configuration de la tâche élevée (placé à la racine, à côté du .iss)
+Source: "install-buffbar-temp.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -50,10 +56,27 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
     ValueType: none; ValueName: "BuffBar"; Flags: dontcreatekey uninsdeletevalue
 
 [Run]
+; Option température : le .ps1 s'auto-élève (UNE invite UAC) et enregistre la
+; tâche « BuffBar » qui lancera l'exe en admin à chaque login, puis relance la
+; barre. N'est exécuté que si la tâche « cputemp » est cochée.
+Filename: "powershell.exe"; \
+    Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-buffbar-temp.ps1"" -ExePath ""{app}\{#AppExe}"""; \
+    StatusMsg: "Activation de la lecture de temperature CPU (elevation requise)..."; \
+    Flags: runhidden waituntilterminated; Tasks: cputemp
+
+; Lancement de fin d'installation — UNIQUEMENT si la température n'est PAS activée.
+; (Sinon on lancerait l'exe NON élevé, en conflit de mutex avec la tâche élevée
+; qui vient déjà de démarrer la barre.)
 Filename: "{app}\{#AppExe}"; Description: "Lancer {#AppName}"; \
-    Flags: nowait postinstall skipifsilent
+    Flags: nowait postinstall skipifsilent; Check: not WizardIsTaskSelected('cputemp')
 
 [UninstallRun]
-; Ferme l'application avant la désinstallation.
+; Retire la tâche élevée (n'élève QUE si elle existe -> pas d'UAC inutile sinon).
+; Doit passer AVANT le taskkill : étant élevé, le .ps1 peut arrêter une barre
+; élevée que taskkill (non élevé) ne pourrait pas tuer.
+Filename: "powershell.exe"; \
+    Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-buffbar-temp.ps1"" -Uninstall"; \
+    Flags: runhidden waituntilterminated; RunOnceId: "RemoveBuffBarTask"
+; Ferme l'application avant la désinstallation (cas non élevé).
 Filename: "{cmd}"; Parameters: "/c taskkill /im {#AppExe} /f"; \
     Flags: runhidden; RunOnceId: "KillBuffBar"
