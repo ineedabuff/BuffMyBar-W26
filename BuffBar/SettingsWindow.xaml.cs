@@ -19,18 +19,12 @@ public partial class SettingsWindow : Window
 
     private void Load(Config c)
     {
-        ThemeBuff.IsChecked = c.Theme == "buff";
-        ThemeWindows.IsChecked = c.Theme == "windows";
-        ThemeCyber.IsChecked = c.Theme == "cyber";
-        if (c.Theme is not ("buff" or "windows" or "cyber"))
-            ThemeBuff.IsChecked = true;
-
         HeightBox.Text = c.Height.ToString(CultureInfo.InvariantCulture);
         CityBox.Text = c.WeatherCity;
 
         GamingBox.IsChecked = c.GamingMode;
-        ExtAccentBox.IsChecked = c.ExternalAccent;
         AcrylicBox.IsChecked = c.Acrylic;
+        IncludeScreenshotsBox.IsChecked = c.IncludeInScreenshots;
 
         WWeather.IsChecked = c.Widgets.Weather;
         WUptime.IsChecked = c.Widgets.Uptime;
@@ -96,14 +90,13 @@ public partial class SettingsWindow : Window
     {
         var c = new Config
         {
-            Theme = ThemeCyber.IsChecked == true ? "cyber"
-                  : ThemeWindows.IsChecked == true ? "windows"
-                  : "buff",
+            Theme = "windows",
             Height = ParseDouble(HeightBox.Text, 36, 24, 96),
             WeatherCity = string.IsNullOrWhiteSpace(CityBox.Text) ? "Terrebonne" : CityBox.Text.Trim(),
             GamingMode = GamingBox.IsChecked == true,
-            ExternalAccent = ExtAccentBox.IsChecked == true,
+            ExternalAccent = false,
             Acrylic = AcrylicBox.IsChecked == true,
+            IncludeInScreenshots = IncludeScreenshotsBox.IsChecked == true,
             Widgets = new WidgetToggles
             {
                 Weather = WWeather.IsChecked == true,

@@ -60,6 +60,9 @@ public sealed class Config
     /// <summary>Fond acrylique translucide (façon barre des tâches).</summary>
     public bool Acrylic { get; set; } = true;
 
+    /// <summary>Inclut BuffBar dans les captures d'écran et le partage d'écran.</summary>
+    public bool IncludeInScreenshots { get; set; } = false;
+
     public WidgetToggles Widgets { get; set; } = new();
     public ObsConfig Obs { get; set; } = new();
     public GoogleCalendarConfig GoogleCalendar { get; set; } = new();

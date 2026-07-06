@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using BuffBar.Services;
 using static BuffBar.Interop.NativeMethods;
 
 namespace BuffBar.Interop;
@@ -46,6 +48,7 @@ public sealed class AppBarManager
         _source?.AddHook(WndProc);
 
         MakeToolWindow();
+        ApplyScreenCaptureMode();
         Register();
         UpdatePosition();
         StartGuard();
@@ -92,6 +95,17 @@ public sealed class AppBarManager
         int ex = GetWindowLong(_hwnd, GWL_EXSTYLE);
         ex |= WS_EX_TOOLWINDOW;   // hors Alt+Tab et barre des tâches
         SetWindowLong(_hwnd, GWL_EXSTYLE, ex);
+    }
+
+    private void ApplyScreenCaptureMode()
+    {
+        uint affinity = ConfigService.Current.IncludeInScreenshots
+            ? WDA_NONE
+            : WDA_EXCLUDEFROMCAPTURE;
+
+        // Contrôle si BuffBar apparaît dans l'outil Capture, Teams, OBS, etc.
+        // Sur les versions de Windows qui ne supportent pas ce mode, l'appel échoue sans effet.
+        SetWindowDisplayAffinity(_hwnd, affinity);
     }
 
     private void Register()
@@ -163,17 +177,19 @@ public sealed class AppBarManager
 
     private void Guard()
     {
-        if (BarConfig.KeepBarOnTop)
+        IntPtr fg = GetForegroundWindow();
+        bool captureActive = IsScreenCaptureHost(fg);
+
+        if (BarConfig.KeepBarOnTop && !captureActive)
             SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-        if (BarConfig.ReclaimFullscreenWindows)
-            ReclaimForeground();
+        if (BarConfig.ReclaimFullscreenWindows && !captureActive)
+            ReclaimForeground(fg);
     }
 
-    private void ReclaimForeground()
+    private void ReclaimForeground(IntPtr fg)
     {
-        IntPtr fg = GetForegroundWindow();
         if (fg == IntPtr.Zero || fg == _hwnd)
             return;
 
@@ -203,6 +219,28 @@ public sealed class AppBarManager
                 work.right - work.left,
                 work.bottom - work.top,
                 SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+    }
+
+    private static bool IsScreenCaptureHost(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero)
+            return false;
+
+        GetWindowThreadProcessId(hwnd, out uint pid);
+        if (pid == 0)
+            return false;
+
+        try
+        {
+            string name = Process.GetProcessById((int)pid).ProcessName;
+            return name.Equals("ScreenClippingHost", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("SnippingTool", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("SnipAndSketch", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 

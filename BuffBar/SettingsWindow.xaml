@@ -47,14 +47,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="700">
         <StackPanel Margin="18">
 
-            <TextBlock Text="Thème" Style="{StaticResource Header}" Margin="0,0,0,6"/>
-            <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="ThemeBuff"    GroupName="theme" Content="Buff"/>
-                <RadioButton x:Name="ThemeWindows" GroupName="theme" Content="Windows"/>
-                <RadioButton x:Name="ThemeCyber"   GroupName="theme" Content="Cyber"/>
-            </StackPanel>
-
-            <TextBlock Text="Hauteur (DIP)" Style="{StaticResource Header}"/>
+            <TextBlock Text="Hauteur (DIP)" Style="{StaticResource Header}" Margin="0,0,0,6"/>
             <TextBox x:Name="HeightBox" Style="{StaticResource Field}" Width="80"/>
 
             <TextBlock Text="Ville (météo)" Style="{StaticResource Header}"/>
@@ -62,8 +55,10 @@
 
             <TextBlock Text="Options" Style="{StaticResource Header}"/>
             <CheckBox x:Name="GamingBox"   Content="Mode jeu — ping dans le widget réseau"/>
-            <CheckBox x:Name="ExtAccentBox" Content="Accent #ddff24 sur le moniteur externe"/>
             <CheckBox x:Name="AcrylicBox"  Content="Fond acrylique translucide"/>
+
+            <TextBlock Text="Captures d'écran" Style="{StaticResource Header}"/>
+            <CheckBox x:Name="IncludeScreenshotsBox" Content="Inclure BuffBar dans les captures"/>
 
             <TextBlock Text="Widgets" Style="{StaticResource Header}"/>
             <CheckBox x:Name="WWeather"    Content="Météo"/>

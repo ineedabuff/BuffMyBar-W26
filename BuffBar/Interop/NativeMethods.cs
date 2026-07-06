@@ -113,6 +113,12 @@ internal static class NativeMethods
     public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
         int X, int Y, int cx, int cy, uint uFlags);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
     [DllImport("user32.dll")]
     public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
@@ -138,4 +144,9 @@ internal static class NativeMethods
     public const int DWMSBT_MAINWINDOW = 2;       // Mica
     public const int DWMSBT_TRANSIENTWINDOW = 3;  // Acrylique (rendu de la barre des tâches)
     public const int DWMSBT_TABBEDWINDOW = 4;     // Mica Alt
+
+    // ---- Capture d'écran ----
+
+    public const uint WDA_NONE = 0x00000000;
+    public const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 }
