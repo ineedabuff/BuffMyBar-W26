@@ -20,6 +20,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - CPU temperature support through an optional elevated startup task.
 - Installer opt-in for elevated sensor access.
 - Clean scheduled task removal during uninstall.
+- Theme selector (Windows / Buff / Cyber) and external-accent toggle in the Settings window.
 
 ### Changed
 
@@ -34,6 +35,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Fixed
 
+- Settings window no longer resets the theme and external-accent option to defaults when saving.
 - Widget alignment issues.
 - Theme synchronization bugs.
 - Volume widget mute indicator.

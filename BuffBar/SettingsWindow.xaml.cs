@@ -22,8 +22,14 @@ public partial class SettingsWindow : Window
         HeightBox.Text = c.Height.ToString(CultureInfo.InvariantCulture);
         CityBox.Text = c.WeatherCity;
 
+        ThemeWindows.IsChecked = c.Theme == "windows";
+        ThemeCyber.IsChecked = c.Theme == "cyber";
+        // « buff » par défaut, y compris pour un nom de thème inconnu.
+        ThemeBuff.IsChecked = ThemeWindows.IsChecked != true && ThemeCyber.IsChecked != true;
+
         GamingBox.IsChecked = c.GamingMode;
         AcrylicBox.IsChecked = c.Acrylic;
+        ExternalAccentBox.IsChecked = c.ExternalAccent;
         IncludeScreenshotsBox.IsChecked = c.IncludeInScreenshots;
 
         WWeather.IsChecked = c.Widgets.Weather;
@@ -90,11 +96,11 @@ public partial class SettingsWindow : Window
     {
         var c = new Config
         {
-            Theme = "windows",
+            Theme = SelectedTheme(),
             Height = ParseDouble(HeightBox.Text, 36, 24, 96),
             WeatherCity = string.IsNullOrWhiteSpace(CityBox.Text) ? "Terrebonne" : CityBox.Text.Trim(),
             GamingMode = GamingBox.IsChecked == true,
-            ExternalAccent = false,
+            ExternalAccent = ExternalAccentBox.IsChecked == true,
             Acrylic = AcrylicBox.IsChecked == true,
             IncludeInScreenshots = IncludeScreenshotsBox.IsChecked == true,
             Widgets = new WidgetToggles
@@ -130,6 +136,13 @@ public partial class SettingsWindow : Window
     }
 
     private void OnCancel(object sender, RoutedEventArgs e) => Close();
+
+    private string SelectedTheme()
+    {
+        if (ThemeWindows.IsChecked == true) return "windows";
+        if (ThemeCyber.IsChecked == true) return "cyber";
+        return "buff";
+    }
 
     private static double ParseDouble(string s, double fallback, double min, double max)
     {

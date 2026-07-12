@@ -53,9 +53,17 @@
             <TextBlock Text="Ville (météo)" Style="{StaticResource Header}"/>
             <TextBox x:Name="CityBox" Style="{StaticResource Field}" Width="220"/>
 
+            <TextBlock Text="Thème" Style="{StaticResource Header}"/>
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ThemeWindows" GroupName="Theme" Content="Windows"/>
+                <RadioButton x:Name="ThemeBuff"    GroupName="Theme" Content="Buff"/>
+                <RadioButton x:Name="ThemeCyber"   GroupName="Theme" Content="Cyber"/>
+            </StackPanel>
+
             <TextBlock Text="Options" Style="{StaticResource Header}"/>
-            <CheckBox x:Name="GamingBox"   Content="Mode jeu — ping dans le widget réseau"/>
-            <CheckBox x:Name="AcrylicBox"  Content="Fond acrylique translucide"/>
+            <CheckBox x:Name="GamingBox"         Content="Mode jeu — ping dans le widget réseau"/>
+            <CheckBox x:Name="AcrylicBox"        Content="Fond acrylique translucide"/>
+            <CheckBox x:Name="ExternalAccentBox" Content="Accent inversé sur le moniteur externe"/>
 
             <TextBlock Text="Captures d'écran" Style="{StaticResource Header}"/>
             <CheckBox x:Name="IncludeScreenshotsBox" Content="Inclure BuffBar dans les captures"/>
