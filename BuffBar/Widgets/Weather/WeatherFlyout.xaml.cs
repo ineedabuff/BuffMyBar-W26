@@ -21,7 +21,7 @@ public partial class WeatherFlyout : UserControl
     {
         if (!w.Ok) return;
 
-        BigIcon.Text = WeatherIcons.Glyph(w.Condition, w.IsNight);
+        BigIcon.Set(w.Condition, w.IsNight);
         BigTemp.Text = $"{w.TempC}\u00B0C";
         Desc.Text = w.Description;
 

@@ -59,7 +59,7 @@ public partial class WeatherWidget : UserControl, IBarWidget
             _last = w;
             _hasData = true;
             Root.Visibility = Visibility.Visible;
-            WidgetAnimator.SetTextWithGlitch(Icon, WeatherIcons.Glyph(w.Condition, w.IsNight));
+            Icon.Set(w.Condition, w.IsNight);
             WidgetAnimator.SetTextWithGlitch(Temp, $"{w.TempC}\u00B0C");
             Root.ToolTip = string.IsNullOrWhiteSpace(w.Description)
                 ? $"Ressenti {w.FeelsLikeC}\u00B0C — cliquer pour les prévisions"
