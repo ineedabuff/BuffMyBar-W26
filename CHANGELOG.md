@@ -20,6 +20,8 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - CPU temperature support through an optional elevated startup task.
 - Installer opt-in for elevated sensor access.
 - Clean scheduled task removal during uninstall.
+- Update check against GitHub Releases on startup, surfaced as a context-menu item.
+- Winget manifest (`installer/winget/`) for `winget install IneedABUFF.BuffMyBar`.
 
 ### Changed
 

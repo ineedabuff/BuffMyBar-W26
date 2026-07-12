@@ -62,6 +62,9 @@ public partial class App : Application
 
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
+
+        // Vérifie les mises à jour en arrière-plan (best-effort, non bloquant).
+        _ = UpdateService.CheckAsync();
     }
 
     private void OnDisplaySettingsChanged(object? sender, EventArgs e) => ScheduleRestart();

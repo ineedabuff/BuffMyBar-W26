@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -42,6 +43,9 @@ public partial class MainWindow : Window
         PositionHint();
 
         ComposeWidgets();
+
+        UpdateService.Changed += OnUpdateStateChanged;
+        ReflectUpdateState();
     }
 
     // Place approximativement la fenêtre sur le moniteur cible avant l'affichage
@@ -119,6 +123,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        UpdateService.Changed -= OnUpdateStateChanged;
         _appBar?.Remove();
         base.OnClosed(e);
     }
@@ -156,4 +161,41 @@ public partial class MainWindow : Window
     // ---- Menu contextuel ----
 
     private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
+
+    // ---- Mise à jour ----
+
+    private void OnUpdateStateChanged()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(ReflectUpdateState));
+            return;
+        }
+
+        ReflectUpdateState();
+    }
+
+    /// <summary>Affiche l'entrée de menu « Mettre à jour » si une version est disponible.</summary>
+    private void ReflectUpdateState()
+    {
+        if (!UpdateService.UpdateAvailable)
+            return;
+
+        UpdateItem.Header = $"⬆ Mettre à jour — {UpdateService.LatestTag} disponible";
+        UpdateItem.Visibility = Visibility.Visible;
+        UpdateSeparator.Visibility = Visibility.Visible;
+    }
+
+    private void OnUpdate(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(UpdateService.ReleasesUrl) { UseShellExecute = true });
+        }
+        catch
+        {
+            // Navigateur indisponible : sans effet.
+        }
+    }
 }
+

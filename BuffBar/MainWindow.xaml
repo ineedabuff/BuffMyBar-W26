@@ -17,6 +17,8 @@
     <!-- Menu contextuel : seul moyen de quitter (la barre n'a pas d'entrée dans la barre des tâches) -->
     <Window.ContextMenu>
         <ContextMenu>
+            <MenuItem x:Name="UpdateItem" Visibility="Collapsed" Click="OnUpdate"/>
+            <Separator x:Name="UpdateSeparator" Visibility="Collapsed"/>
             <MenuItem Header="Paramètres…" Click="OnSettings"/>
             <Separator/>
             <MenuItem Header="Recharger la position" Click="OnReload"/>
