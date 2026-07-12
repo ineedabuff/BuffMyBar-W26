@@ -28,6 +28,15 @@ public partial class App : Application
         // Charge la configuration (settings.json) AVANT tout le reste.
         ConfigService.Initialize();
 
+        // Journalisation détaillée : coupée par défaut (pas d'écriture disque en
+        // continu). Activable pour un rapport de bug via BUFFBAR_VERBOSE=1, et
+        // toujours active dans les builds Debug.
+        Logger.VerboseEnabled =
+            Environment.GetEnvironmentVariable("BUFFBAR_VERBOSE") == "1";
+#if DEBUG
+        Logger.VerboseEnabled = true;
+#endif
+
         // Résout la police Nerd Font installée AVANT le chargement des fenêtres.
         Logger.Log($"App: démarrage. Journal : {Logger.LogPath}");
         FontService.Apply();

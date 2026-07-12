@@ -178,7 +178,7 @@ public sealed class AudioCapture
                     lock (_lock)
                         for (int b = 0; b < Bands; b++)
                             if (_bands[b] > bandMax) bandMax = _bands[b];
-                    Logger.Log($"AudioCapture: 1s -> samples={_diagSamples} maxAmp={_diagMaxAmp:F4} bandMax={bandMax:F3}");
+                    Logger.Verbose($"AudioCapture: 1s -> samples={_diagSamples} maxAmp={_diagMaxAmp:F4} bandMax={bandMax:F3}");
                     _diagSamples = 0;
                     _diagMaxAmp = 0;
                     lastLog = now;
