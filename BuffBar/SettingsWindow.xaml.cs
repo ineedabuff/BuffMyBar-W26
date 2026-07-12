@@ -26,6 +26,11 @@ public partial class SettingsWindow : Window
         AcrylicBox.IsChecked = c.Acrylic;
         IncludeScreenshotsBox.IsChecked = c.IncludeInScreenshots;
 
+        SysPrimary.IsChecked = c.SystemIndicatorsScope == "primary";
+        SysAll.IsChecked = c.SystemIndicatorsScope == "all";
+        // « Externe » par défaut, y compris pour une valeur inconnue.
+        SysExternal.IsChecked = SysPrimary.IsChecked != true && SysAll.IsChecked != true;
+
         WWeather.IsChecked = c.Widgets.Weather;
         WUptime.IsChecked = c.Widgets.Uptime;
         WNetwork.IsChecked = c.Widgets.Network;
@@ -95,6 +100,7 @@ public partial class SettingsWindow : Window
             GamingMode = GamingBox.IsChecked == true,
             Acrylic = AcrylicBox.IsChecked == true,
             IncludeInScreenshots = IncludeScreenshotsBox.IsChecked == true,
+            SystemIndicatorsScope = SelectedSysScope(),
             Widgets = new WidgetToggles
             {
                 Weather = WWeather.IsChecked == true,
@@ -125,6 +131,13 @@ public partial class SettingsWindow : Window
         ConfigService.Save(c);
         (Application.Current as App)?.ApplyConfigAndRestart();
         Close();
+    }
+
+    private string SelectedSysScope()
+    {
+        if (SysPrimary.IsChecked == true) return "primary";
+        if (SysAll.IsChecked == true) return "all";
+        return "external";
     }
 
     private void OnCancel(object sender, RoutedEventArgs e) => Close();

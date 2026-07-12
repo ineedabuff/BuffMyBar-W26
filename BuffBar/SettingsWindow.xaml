@@ -71,6 +71,13 @@
             <CheckBox x:Name="WBluetooth"  Content="Bluetooth"/>
             <CheckBox x:Name="WBattery"    Content="Batterie"/>
 
+            <TextBlock Text="Indicateurs système (CPU / RAM / GPU)" Style="{StaticResource Header}"/>
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="SysExternal" GroupName="SysScope" Content="Externe"/>
+                <RadioButton x:Name="SysPrimary"  GroupName="SysScope" Content="Principal"/>
+                <RadioButton x:Name="SysAll"      GroupName="SysScope" Content="Tous"/>
+            </StackPanel>
+
             <TextBlock Text="OBS (obs-websocket)" Style="{StaticResource Header}"/>
             <Grid>
                 <Grid.ColumnDefinitions>

@@ -13,7 +13,8 @@ namespace BuffBar.Widgets.SystemIndicators;
 /// <summary>
 /// Compact CPU / RAM / GPU indicators.
 /// Values that cannot be detected are hidden automatically.
-/// The widget is intentionally shown only on external monitors.
+/// Visibility per monitor is decided by the caller (settings scope:
+/// external / primary / all).
 /// </summary>
 public partial class SystemIndicatorsWidget : UserControl, IBarWidget
 {
@@ -35,9 +36,9 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
     {
     }
 
-    public SystemIndicatorsWidget(bool isExternalMonitor)
+    public SystemIndicatorsWidget(bool showOnThisMonitor)
     {
-        _showOnThisMonitor = isExternalMonitor;
+        _showOnThisMonitor = showOnThisMonitor;
 
         InitializeComponent();
 

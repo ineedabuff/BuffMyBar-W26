@@ -57,6 +57,9 @@ public sealed class Config
     /// <summary>Inclut BuffBar dans les captures d'écran et le partage d'écran.</summary>
     public bool IncludeInScreenshots { get; set; } = false;
 
+    /// <summary>Où afficher les indicateurs système : external | primary | all.</summary>
+    public string SystemIndicatorsScope { get; set; } = "external";
+
     public WidgetToggles Widgets { get; set; } = new();
     public ObsConfig Obs { get; set; } = new();
     public GoogleCalendarConfig GoogleCalendar { get; set; } = new();

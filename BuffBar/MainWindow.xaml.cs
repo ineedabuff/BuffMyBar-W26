@@ -87,7 +87,13 @@ public partial class MainWindow : Window
         if (w.Media) LeftRegion.Children.Add(new MediaWidget());
 
         // Droite — alignée à droite (ajout = gauche -> droite)
-        RightRegion.Children.Add(new SystemIndicatorsWidget(_isExternal));
+        bool showSysHere = ConfigService.Current.SystemIndicatorsScope switch
+        {
+            "all" => true,
+            "primary" => !_isExternal,
+            _ => _isExternal   // « external » (défaut)
+        };
+        RightRegion.Children.Add(new SystemIndicatorsWidget(showSysHere));
         if (w.Visualizer) RightRegion.Children.Add(new VisualizerWidget());
         if (w.Volume) RightRegion.Children.Add(new VolumeWidget());
         if (w.Bluetooth) RightRegion.Children.Add(new BluetoothWidget());
