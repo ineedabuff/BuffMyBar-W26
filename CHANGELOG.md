@@ -22,6 +22,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - Clean scheduled task removal during uninstall.
 - Update check against GitHub Releases on startup, surfaced as a context-menu item.
 - Winget manifest (`installer/winget/`) for `winget install IneedABUFF.BuffMyBar`.
+- System monitor flyout on hover of the system indicators: CPU / RAM / GPU / CPU-temperature with live meters.
 
 ### Changed
 

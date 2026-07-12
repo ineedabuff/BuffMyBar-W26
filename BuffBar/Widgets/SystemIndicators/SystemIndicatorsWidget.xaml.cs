@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
+using BuffBar.Widgets.Common;
 
 namespace BuffBar.Widgets.SystemIndicators;
 
@@ -45,6 +46,12 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
             Interval = TimeSpan.FromMilliseconds(650)
         };
         _blinkTimer.Tick += (_, _) => ToggleCriticalBlink();
+
+        // Applet détaillée au survol (seulement là où le module est affiché).
+        HoverPopup.Attach(
+            Root, Flyout, Monitor,
+            onOpening: () => Monitor.Update(_metrics.Read()),
+            canOpen: () => _showOnThisMonitor);
 
         Loaded += (_, _) =>
         {
@@ -104,6 +111,10 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
             : Visibility.Collapsed;
 
         UpdateBlinkState();
+
+        // Met à jour l'applet en direct tant qu'elle est ouverte.
+        if (Flyout.IsOpen)
+            Monitor.Update(snapshot);
     }
 
     private bool ApplyMetric(TextBlock label, int? percent, string? text)
