@@ -23,6 +23,9 @@ public partial class CalendarFlyout : UserControl
     private static readonly CultureInfo Culture = new("fr-CA");
     private static readonly string[] DayHeaders = { "lu", "ma", "me", "je", "ve", "sa", "di" };
 
+    // Pastille d'événement : accent identitaire Buff (#ddff24), indépendant du thème.
+    private static readonly Brush EventDot = Frozen(0xDD, 0xFF, 0x24);
+
     private DateTime _shown;       // 1er du mois affiché
     private DateTime _selected;    // jour sélectionné
     private int _generation;       // anti-concurrence des chargements asynchrones
@@ -111,7 +114,7 @@ public partial class CalendarFlyout : UserControl
             {
                 Width = 5,
                 Height = 5,
-                Fill = isToday ? Brushes.Black : accent,
+                Fill = EventDot,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Bottom,
                 Margin = new Thickness(0, 0, 0, 2),
@@ -227,24 +230,38 @@ public partial class CalendarFlyout : UserControl
 
     private FrameworkElement BuildEventRow(CalEvent e)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+        // Grille 2 colonnes : l'heure à largeur fixe, le titre en étoile pour qu'il
+        // s'enroule (plusieurs lignes) au lieu d'être tronqué par « … ».
+        var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        row.Children.Add(new TextBlock
+        var time = new TextBlock
         {
             Text = e.AllDay ? "journée" : e.Start.ToString("HH:mm", Culture),
             Style = (Style)FindResource("FlyoutSubtle"),
-            Width = 56
-        });
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        Grid.SetColumn(time, 0);
+        row.Children.Add(time);
 
-        row.Children.Add(new TextBlock
+        var title = new TextBlock
         {
             Text = e.Title,
             Style = (Style)FindResource("FlyoutText"),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxWidth = 200
-        });
+            TextWrapping = TextWrapping.Wrap
+        };
+        Grid.SetColumn(title, 1);
+        row.Children.Add(title);
 
         return row;
+    }
+
+    private static SolidColorBrush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
     }
 
     private static string Capitalize(string s)

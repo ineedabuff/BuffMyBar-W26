@@ -22,7 +22,7 @@
                 <TextBlock x:Name="DateText"
                            Style="{StaticResource ModuleText}"
                            HorizontalAlignment="Center"
-                           Foreground="{DynamicResource SubtleText}"
+                           Foreground="#FFFFFF"
                            FontSize="11"
                            LineHeight="13"
                            LineStackingStrategy="BlockLineHeight"/>
