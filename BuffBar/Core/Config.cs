@@ -45,7 +45,7 @@ public sealed class Config
     /// <summary>Hauteur de la barre en DIP.</summary>
     public double Height { get; set; } = 36;
 
-    /// <summary>Ville pour la météo (wttr.in).</summary>
+    /// <summary>Ville pour la météo (nom de ville Environnement Canada, ex. « Mascouche »).</summary>
     public string WeatherCity { get; set; } = "Terrebonne";
 
     /// <summary>Mode jeu : ajoute la latence (ping) au widget réseau.</summary>

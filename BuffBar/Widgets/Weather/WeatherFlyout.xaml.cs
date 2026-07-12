@@ -21,7 +21,7 @@ public partial class WeatherFlyout : UserControl
     {
         if (!w.Ok) return;
 
-        BigIcon.Text = WeatherIcons.Glyph(w.Code);
+        BigIcon.Text = WeatherIcons.Glyph(w.Condition, w.IsNight);
         BigTemp.Text = $"{w.TempC}\u00B0C";
         Desc.Text = w.Description;
 
@@ -48,7 +48,7 @@ public partial class WeatherFlyout : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = WeatherIcons.Glyph(d.Code),
+            Text = WeatherIcons.Glyph(d.Condition),
             Style = (Style)FindResource("ModuleText"),
             Foreground = (System.Windows.Media.Brush)FindResource("AccentBrush"),
             FontSize = 18,

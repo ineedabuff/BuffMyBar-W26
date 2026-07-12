@@ -1,31 +1,27 @@
-using System.Collections.Generic;
+using BuffBar.Services;
 
 namespace BuffBar.Widgets.Weather;
 
 /// <summary>
-/// Correspondance code météo WWO (wttr.in) -> glyphe Nerd Font (Font Awesome).
-/// Partagée par le module et son flyout.
+/// Correspondance <see cref="WeatherCondition"/> -> glyphe Nerd Font (Font Awesome).
+/// Les points de code sont construits par cast pour éviter toute ambiguïté d'échappement.
+/// Étape provisoire : les icônes animées WPF natives remplaceront ces glyphes.
 /// </summary>
 public static class WeatherIcons
 {
-    public const string Sun = "\uF185";    // sun
-    public const string Cloud = "\uF0C2";  // cloud
-    public const string Rain = "\uF043";   // tint (goutte)
-    public const string Flake = "\uF2DC";  // snowflake
-    public const string Bolt = "\uF0E7";   // bolt (orage)
+    public static readonly string Sun = char.ToString((char)0xF185);    // sun
+    public static readonly string Moon = char.ToString((char)0xF186);   // moon
+    public static readonly string Cloud = char.ToString((char)0xF0C2);  // cloud
+    public static readonly string Rain = char.ToString((char)0xF043);   // tint (goutte)
+    public static readonly string Flake = char.ToString((char)0xF2DC);  // snowflake
+    public static readonly string Bolt = char.ToString((char)0xF0E7);   // bolt (orage)
 
-    private static readonly HashSet<int> Thunder = new() { 200, 386, 389, 392, 395 };
-    private static readonly HashSet<int> Snow = new()
-        { 179, 182, 227, 230, 323, 326, 329, 332, 335, 338, 350, 362, 365, 368, 371, 374, 377 };
-    private static readonly HashSet<int> Clouds = new() { 116, 119, 122, 143, 248, 260 };
-
-    public static string Glyph(int code)
+    public static string Glyph(WeatherCondition condition, bool night = false) => condition switch
     {
-        if (code == 113) return Sun;
-        if (Thunder.Contains(code)) return Bolt;
-        if (Snow.Contains(code)) return Flake;
-        if (Clouds.Contains(code)) return Cloud;
-        if (code >= 176) return Rain;
-        return Cloud;
-    }
+        WeatherCondition.Sunny => night ? Moon : Sun,
+        WeatherCondition.Rain or WeatherCondition.Showers or WeatherCondition.Drizzle => Rain,
+        WeatherCondition.Snow or WeatherCondition.Sleet => Flake,
+        WeatherCondition.Thunder => Bolt,
+        _ => Cloud
+    };
 }
