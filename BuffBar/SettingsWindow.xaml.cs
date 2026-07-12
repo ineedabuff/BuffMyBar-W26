@@ -90,11 +90,9 @@ public partial class SettingsWindow : Window
     {
         var c = new Config
         {
-            Theme = "windows",
             Height = ParseDouble(HeightBox.Text, 36, 24, 96),
             WeatherCity = string.IsNullOrWhiteSpace(CityBox.Text) ? "Terrebonne" : CityBox.Text.Trim(),
             GamingMode = GamingBox.IsChecked == true,
-            ExternalAccent = false,
             Acrylic = AcrylicBox.IsChecked == true,
             IncludeInScreenshots = IncludeScreenshotsBox.IsChecked == true,
             Widgets = new WidgetToggles

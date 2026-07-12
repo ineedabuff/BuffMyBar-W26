@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using BuffBar.Core;
@@ -8,20 +7,19 @@ namespace BuffBar.Services;
 
 /// <summary>
 /// Applique les couleurs actives de BuffMyBar.
-/// En mode "windows", cette classe suit le vrai theme Windows 11 via WindowsThemeService.
+/// La barre suit toujours le thème de Windows 11 (clair/sombre + accent) via
+/// <see cref="WindowsThemeService"/> — pas de palette personnalisée.
 /// </summary>
 public static class ThemeService
 {
-    private static bool _followingWindows;
-
     public static event Action? Applied;
 
-    /// <summary>Point d'entree au demarrage.</summary>
+    /// <summary>Point d'entrée au démarrage.</summary>
     public static void Start()
     {
         WindowsThemeService.Start();
         WindowsThemeService.Changed += OnWindowsThemeChanged;
-        ApplyConfigTheme();
+        Apply();
     }
 
     public static void Stop()
@@ -30,51 +28,10 @@ public static class ThemeService
         WindowsThemeService.Stop();
     }
 
-    /// <summary>Applique le theme nomme dans settings.json.</summary>
-    public static void ApplyConfigTheme()
-    {
-        ThemePalette p = ConfigService.LoadTheme(ConfigService.Current.Theme);
-        _followingWindows = p.FollowWindows;
+    /// <summary>Réapplique le thème Windows courant (après un changement de config).</summary>
+    public static void Apply() => ApplyWindows(WindowsThemeService.Current);
 
-        if (_followingWindows)
-            ApplyWindows(WindowsThemeService.Current);
-        else
-            ApplyPalette(p);
-    }
-
-    /// <summary>Change le theme, sauvegarde et applique en direct.</summary>
-    public static void SetTheme(string name)
-    {
-        Config c = ConfigService.Current;
-        if (string.Equals(c.Theme, name, StringComparison.OrdinalIgnoreCase))
-        {
-            ApplyConfigTheme();
-            return;
-        }
-
-        c.Theme = name;
-        ConfigService.Save(c);
-        ApplyConfigTheme();
-    }
-
-    private static void OnWindowsThemeChanged(WindowsThemeSnapshot snapshot)
-    {
-        if (_followingWindows)
-            ApplyWindows(snapshot);
-    }
-
-    private static void ApplyPalette(ThemePalette p)
-    {
-        Set("BarBackground", Hex(p.BarBackground));
-        Set("ModuleBackground", Hex(p.ModuleBackground));
-        Set("ModuleBorderBrush", Hex(p.ModuleBorder));
-        Set("HoverBackground", Hex(p.HoverBackground));
-        Set("HoverBorderBrush", Hex(p.HoverBorder));
-        Set("PrimaryText", Hex(p.PrimaryText));
-        Set("SubtleText", Hex(p.SubtleText));
-        Set("AccentBrush", Hex(p.Accent));
-        Applied?.Invoke();
-    }
+    private static void OnWindowsThemeChanged(WindowsThemeSnapshot snapshot) => ApplyWindows(snapshot);
 
     private static void ApplyWindows(WindowsThemeSnapshot w)
     {
@@ -87,9 +44,7 @@ public static class ThemeService
         Set("HoverBorderBrush", p.HoverBorder);
         Set("PrimaryText", p.PrimaryText);
         Set("SubtleText", p.SubtleText);
-
-        if (!BarConfig.KeepBuffAccent)
-            Set("AccentBrush", w.AccentColor);
+        Set("AccentBrush", w.AccentColor);
 
         Applied?.Invoke();
     }
@@ -156,35 +111,6 @@ public static class ThemeService
             brush.Color = color;
         else if (Application.Current != null)
             Application.Current.Resources[key] = new SolidColorBrush(color);
-    }
-
-    private static Color Hex(string s)
-    {
-        try
-        {
-            string h = s.Trim().TrimStart('#');
-            if (h.Length == 6)
-            {
-                return Color.FromRgb(
-                    byte.Parse(h[..2], NumberStyles.HexNumber),
-                    byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
-                    byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber));
-            }
-            if (h.Length == 8)
-            {
-                return Color.FromArgb(
-                    byte.Parse(h[..2], NumberStyles.HexNumber),
-                    byte.Parse(h.Substring(2, 2), NumberStyles.HexNumber),
-                    byte.Parse(h.Substring(4, 2), NumberStyles.HexNumber),
-                    byte.Parse(h.Substring(6, 2), NumberStyles.HexNumber));
-            }
-        }
-        catch
-        {
-            // couleur de diagnostic visible
-        }
-
-        return Color.FromRgb(0xFF, 0x00, 0xFF);
     }
 
     private static Color Rgb(int r, int g, int b) => Color.FromRgb((byte)r, (byte)g, (byte)b);

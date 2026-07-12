@@ -2,7 +2,6 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using BuffBar.Interop;
 using BuffBar.Services;
 using BuffBar.Core;
@@ -116,9 +115,6 @@ public partial class MainWindow : Window
 
         // Fond translucide « acrylique » comme la barre des tâches (repli sûr si non supporté).
         BackdropService.TryApply(this);
-
-        // Mode « accent inversé » sur le moniteur externe, si l'option est active.
-        RefreshExternalAccent();
     }
 
     protected override void OnClosed(EventArgs e)
@@ -139,57 +135,9 @@ public partial class MainWindow : Window
         _appBar.Initialize();
     }
 
-    // ---- Mode « accent inversé » sur le moniteur externe ----
-
-    private static readonly string[] AccentKeys =
-    {
-        "BarBackground", "ModuleBackground", "ModuleBorderBrush",
-        "HoverBackground", "HoverBorderBrush", "PrimaryText", "SubtleText", "AccentBrush"
-    };
-
-    /// <summary>
-    /// Applique (ou retire) la surcharge de couleurs propre à cette fenêtre selon
-    /// l'option « accent externe ». N'a d'effet que sur le moniteur externe.
-    /// Surcharge locale (Window.Resources) : les autres barres ne sont pas touchées.
-    /// </summary>
-    public void RefreshExternalAccent()
-    {
-        bool on = _isExternal && ConfigService.Current.ExternalAccent;
-
-        if (on)
-        {
-            // Sprint-006:
-            // Moniteur externe en mode accent = barre pleine #ddff24.
-            // Les modules se fondent dans la barre: aucun rectangle noir visible.
-            // Tout le texte, les icones et les accents deviennent noirs.
-            SetLocalBrush("BarBackground", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("ModuleBackground", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("ModuleBorderBrush", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("HoverBackground", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("HoverBorderBrush", 0xDD, 0xFF, 0x24);
-            SetLocalBrush("PrimaryText", 0x00, 0x00, 0x00);
-            SetLocalBrush("SubtleText", 0x00, 0x00, 0x00);
-            SetLocalBrush("AccentBrush", 0x00, 0x00, 0x00);
-        }
-        else
-        {
-            foreach (string k in AccentKeys)
-                Resources.Remove(k);
-        }
-    }
-
-    private void SetLocalBrush(string key, byte r, byte g, byte b)
-    {
-        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
-        brush.Freeze();
-        Resources[key] = brush;
-    }
-
-
     /// <summary>Réapplique les éléments dépendants du thème sur cette fenêtre.</summary>
     public void RefreshThemeSurface()
     {
-        RefreshExternalAccent();
         BackdropService.Refresh(this);
     }
 
@@ -205,45 +153,7 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    // ---- Menu contextuel : Paramètres + sélecteur de couleurs ----
-
-    private void OnContextOpened(object sender, RoutedEventArgs e) => SyncThemeChecks();
+    // ---- Menu contextuel ----
 
     private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
-
-    private void OnThemeFollow(object sender, RoutedEventArgs e)
-    {
-        ThemeService.SetTheme("windows");
-        SyncThemeChecks();
-    }
-
-    private void OnThemeBuff(object sender, RoutedEventArgs e)
-    {
-        ThemeService.SetTheme("buff");
-        SyncThemeChecks();
-    }
-
-    private void OnThemeCyber(object sender, RoutedEventArgs e)
-    {
-        ThemeService.SetTheme("cyber");
-        SyncThemeChecks();
-    }
-
-    private void OnExternalAccent(object sender, RoutedEventArgs e)
-    {
-        Config c = ConfigService.Current;
-        c.ExternalAccent = !c.ExternalAccent;
-        ConfigService.Save(c);
-        (Application.Current as App)?.RefreshExternalAccentAll();
-        SyncThemeChecks();
-    }
-
-    private void SyncThemeChecks()
-    {
-        string theme = ConfigService.Current.Theme;
-        ThemeFollow.IsChecked = theme == "windows";
-        ThemeBuff.IsChecked = theme == "buff";
-        ThemeCyber.IsChecked = theme == "cyber";
-        ExternalAccent.IsChecked = ConfigService.Current.ExternalAccent;
-    }
 }

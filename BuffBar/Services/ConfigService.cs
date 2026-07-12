@@ -10,7 +10,6 @@ namespace BuffBar.Services;
 ///
 ///   BuffMyBar-W26\
 ///   ├── settings.json
-///   ├── themes\  (buff.json, windows.json, cyber.json)
 ///   └── logs\
 ///
 /// 100 % natif (System.Text.Json). Crée les valeurs/fichiers par défaut au besoin.
@@ -34,7 +33,6 @@ public static class ConfigService
     public static string RootDir => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppFolderName);
 
-    public static string ThemesDir => Path.Combine(RootDir, "themes");
     public static string LogsDir => Path.Combine(RootDir, "logs");
     public static string SettingsPath => Path.Combine(RootDir, "settings.json");
 
@@ -44,9 +42,7 @@ public static class ConfigService
         try
         {
             Directory.CreateDirectory(RootDir);
-            Directory.CreateDirectory(ThemesDir);
             Directory.CreateDirectory(LogsDir);
-            EnsureDefaultThemes();
             Current = Load();
         }
         catch
@@ -90,58 +86,4 @@ public static class ConfigService
         }
         catch { /* non bloquant */ }
     }
-
-    /// <summary>Charge la palette d'un thème, avec repli sur les valeurs intégrées.</summary>
-    public static ThemePalette LoadTheme(string name)
-    {
-        try
-        {
-            string path = Path.Combine(ThemesDir, name + ".json");
-            if (File.Exists(path))
-            {
-                ThemePalette? p = JsonSerializer.Deserialize<ThemePalette>(
-                    File.ReadAllText(path), JsonOpts);
-                if (p != null) return p;
-            }
-        }
-        catch { /* repli ci-dessous */ }
-
-        return Builtin(name);
-    }
-
-    private static void EnsureDefaultThemes()
-    {
-        WriteThemeIfMissing("buff");
-        WriteThemeIfMissing("windows");
-        WriteThemeIfMissing("cyber");
-    }
-
-    private static void WriteThemeIfMissing(string name)
-    {
-        string path = Path.Combine(ThemesDir, name + ".json");
-        if (File.Exists(path)) return;
-        try
-        {
-            File.WriteAllText(path, JsonSerializer.Serialize(Builtin(name), JsonOpts));
-        }
-        catch { /* non bloquant */ }
-    }
-
-    private static ThemePalette Builtin(string name) => name switch
-    {
-        "windows" => new ThemePalette { FollowWindows = true },
-        "cyber" => new ThemePalette
-        {
-            FollowWindows = false,
-            BarBackground = "#0A0E14",
-            ModuleBackground = "#0D1320",
-            ModuleBorder = "#1B3A4B",
-            HoverBackground = "#13263A",
-            HoverBorder = "#2DD4BF",
-            PrimaryText = "#E6FBFF",
-            SubtleText = "#7FB8C9",
-            Accent = "#00F0FF"
-        },
-        _ => new ThemePalette()   // buff (valeurs par défaut)
-    };
 }
