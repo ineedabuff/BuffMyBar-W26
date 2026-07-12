@@ -11,8 +11,11 @@ namespace BuffBar.Widgets.Weather;
 
 /// <summary>
 /// Icône météo animée, 100 % WPF natif (formes + storyboards), sans dépendance ni
-/// asset externe. Dessinée dans un repère 100×100 mis à l'échelle par un Viewbox,
-/// elle suit le thème (AccentBrush pour le soleil/lune, PrimaryText pour le reste).
+/// asset externe. Dessinée dans un repère 100×100 mis à l'échelle par un Viewbox.
+///
+/// Couleurs naturelles fixes (soleil jaune, pluie bleue, neige claire, éclair
+/// jaune, nuages gris/blanc) plutôt que le thème : plus fidèle aux conditions.
+/// Note : les nuages clairs peuvent être peu contrastés sur un thème Windows clair.
 ///
 /// Animations volontairement lentes et légères (rotation, dérive, chute) : le coût
 /// est porté par le fil de composition, pas par le thread UI.
@@ -20,6 +23,19 @@ namespace BuffBar.Widgets.Weather;
 public sealed class AnimatedWeatherIcon : Grid
 {
     private const double S = 100; // côté du repère
+
+    // Palette naturelle (figée).
+    private static readonly Brush Sun = Frozen(0xFF, 0xC6, 0x3C);
+    private static readonly Brush Moon = Frozen(0xED, 0xE6, 0xC8);
+    private static readonly Brush Star = Frozen(0xFF, 0xFF, 0xFF);
+    private static readonly Brush Cloud = Frozen(0xDD, 0xE3, 0xEA);
+    private static readonly Brush CloudBack = Frozen(0xA9, 0xB2, 0xBD);
+    private static readonly Brush Rain = Frozen(0x4F, 0xA3, 0xE3);
+    private static readonly Brush Snow = Frozen(0xDC, 0xEB, 0xF7);
+    private static readonly Brush Bolt = Frozen(0xFF, 0xD2, 0x3F);
+    private static readonly Brush Fog = Frozen(0xB8, 0xC0, 0xCA);
+    private static readonly Brush Wind = Frozen(0xC2, 0xCA, 0xD4);
+    private static readonly Brush WindAccent = Frozen(0x8F, 0xC7, 0xD8);
 
     private readonly Canvas _stage = new() { Width = S, Height = S, Background = Brushes.Transparent };
     private readonly List<(IAnimatable Obj, DependencyProperty Prop)> _anims = new();
@@ -42,44 +58,44 @@ public sealed class AnimatedWeatherIcon : Grid
                 break;
             case WeatherCondition.PartlyCloudy:
                 if (night) AddMoon(38, 40, 0.6); else AddSun(38, 40, 0.62);
-                AddCloud(56, 54, 0.95);
+                AddCloud(56, 54, 0.95, Cloud);
                 break;
             case WeatherCondition.Cloudy:
             case WeatherCondition.Overcast:
-                AddCloud(58, 44, 0.7, "SubtleText");
-                AddCloud(46, 54, 1.0);
+                AddCloud(58, 44, 0.7, CloudBack);
+                AddCloud(46, 54, 1.0, Cloud);
                 break;
             case WeatherCondition.Fog:
-                AddCloud(50, 36, 0.85);
+                AddCloud(50, 36, 0.85, Cloud);
                 AddFog();
                 break;
             case WeatherCondition.Drizzle:
-                AddCloud(50, 40, 1.0);
+                AddCloud(50, 40, 1.0, Cloud);
                 AddPrecip(rain: true, count: 3);
                 break;
             case WeatherCondition.Rain:
             case WeatherCondition.Showers:
-                AddCloud(50, 40, 1.0);
+                AddCloud(50, 40, 1.0, Cloud);
                 AddPrecip(rain: true, count: 4);
                 break;
             case WeatherCondition.Snow:
-                AddCloud(50, 40, 1.0);
+                AddCloud(50, 40, 1.0, Cloud);
                 AddPrecip(rain: false, count: 4);
                 break;
             case WeatherCondition.Sleet:
-                AddCloud(50, 40, 1.0);
+                AddCloud(50, 40, 1.0, Cloud);
                 AddPrecip(rain: true, count: 2);
                 AddPrecip(rain: false, count: 2);
                 break;
             case WeatherCondition.Thunder:
-                AddCloud(50, 38, 1.0);
+                AddCloud(50, 38, 1.0, Cloud);
                 AddBolt();
                 break;
             case WeatherCondition.Wind:
                 AddWind();
                 break;
             default:
-                AddCloud(50, 48, 1.1);
+                AddCloud(50, 48, 1.1, Cloud);
                 break;
         }
     }
@@ -99,15 +115,15 @@ public sealed class AnimatedWeatherIcon : Grid
                 Y1 = cy + Math.Sin(a) * 24 * scale,
                 X2 = cx + Math.Cos(a) * 32 * scale,
                 Y2 = cy + Math.Sin(a) * 32 * scale,
+                Stroke = Sun,
                 StrokeThickness = 4 * scale,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round
             };
-            Themed(ray, "AccentBrush", stroke: true);
             group.Children.Add(ray);
         }
 
-        group.Children.Add(Disc(cx, cy, 17 * scale, "AccentBrush"));
+        group.Children.Add(Disc(cx, cy, 17 * scale, Sun));
         _stage.Children.Add(group);
 
         Animate((RotateTransform)group.RenderTransform, RotateTransform.AngleProperty,
@@ -119,18 +135,16 @@ public sealed class AnimatedWeatherIcon : Grid
         double r = 20 * scale;
         var outer = new EllipseGeometry(new Point(cx, cy), r, r);
         var inner = new EllipseGeometry(new Point(cx + r * 0.5, cy - r * 0.28), r * 0.9, r * 0.9);
-        var crescent = new Path { Data = new CombinedGeometry(GeometryCombineMode.Exclude, outer, inner) };
-        Themed(crescent, "AccentBrush");
+        var crescent = new Path { Data = new CombinedGeometry(GeometryCombineMode.Exclude, outer, inner), Fill = Moon };
         _stage.Children.Add(crescent);
 
-        // Petite étoile qui scintille.
-        Ellipse star = Disc(cx + 26 * scale, cy - 18 * scale, 2.4 * scale, "PrimaryText");
+        Ellipse star = Disc(cx + 26 * scale, cy - 18 * scale, 2.4 * scale, Star);
         _stage.Children.Add(star);
         Animate(star, OpacityProperty, Pulse(0.2, 1.0, 1.4));
     }
 
     /// <summary>Nuage dérivant, dessiné autour de (cx, cy).</summary>
-    private void AddCloud(double cx, double cy, double scale, string key = "PrimaryText")
+    private void AddCloud(double cx, double cy, double scale, Brush brush)
     {
         var cloud = new Canvas { RenderTransform = new TranslateTransform() };
 
@@ -139,16 +153,16 @@ public sealed class AnimatedWeatherIcon : Grid
             Width = 44 * scale,
             Height = 16 * scale,
             RadiusX = 8 * scale,
-            RadiusY = 8 * scale
+            RadiusY = 8 * scale,
+            Fill = brush
         };
         Canvas.SetLeft(body, cx - 22 * scale);
         Canvas.SetTop(body, cy + 1 * scale);
-        Themed(body, key);
         cloud.Children.Add(body);
 
-        cloud.Children.Add(Disc(cx - 13 * scale, cy + 4 * scale, 9 * scale, key));
-        cloud.Children.Add(Disc(cx, cy - 5 * scale, 13 * scale, key));
-        cloud.Children.Add(Disc(cx + 14 * scale, cy + 3 * scale, 10 * scale, key));
+        cloud.Children.Add(Disc(cx - 13 * scale, cy + 4 * scale, 9 * scale, brush));
+        cloud.Children.Add(Disc(cx, cy - 5 * scale, 13 * scale, brush));
+        cloud.Children.Add(Disc(cx + 14 * scale, cy + 3 * scale, 10 * scale, brush));
 
         _stage.Children.Add(cloud);
 
@@ -168,10 +182,9 @@ public sealed class AnimatedWeatherIcon : Grid
             var move = new TranslateTransform();
 
             Shape drop = rain
-                ? new Line { X1 = x, Y1 = top, X2 = x, Y2 = top + 7, StrokeThickness = 3, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round }
-                : Disc(x, top, 3, "PrimaryText");
+                ? new Line { X1 = x, Y1 = top, X2 = x, Y2 = top + 7, Stroke = Rain, StrokeThickness = 3, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round }
+                : Disc(x, top, 3, Snow);
 
-            Themed(drop, "PrimaryText", stroke: rain);
             drop.RenderTransform = move;
             _stage.Children.Add(drop);
 
@@ -187,9 +200,9 @@ public sealed class AnimatedWeatherIcon : Grid
     {
         var bolt = new Polygon
         {
+            Fill = Bolt,
             Points = new PointCollection { new(52, 54), new(44, 74), new(50, 74), new(46, 88), new(60, 66), new(53, 66), new(58, 54) }
         };
-        Themed(bolt, "AccentBrush");
         _stage.Children.Add(bolt);
 
         var blink = new DoubleAnimationUsingKeyFrames { RepeatBehavior = RepeatBehavior.Forever };
@@ -207,10 +220,9 @@ public sealed class AnimatedWeatherIcon : Grid
         double[] ys = { 60, 72, 84 };
         for (int i = 0; i < ys.Length; i++)
         {
-            var bar = new Rectangle { Width = 54 - i * 6, Height = 5, RadiusX = 2.5, RadiusY = 2.5, RenderTransform = new TranslateTransform() };
+            var bar = new Rectangle { Width = 54 - i * 6, Height = 5, RadiusX = 2.5, RadiusY = 2.5, Fill = Fog, RenderTransform = new TranslateTransform() };
             Canvas.SetLeft(bar, 23 + i * 3);
             Canvas.SetTop(bar, ys[i]);
-            Themed(bar, "SubtleText");
             _stage.Children.Add(bar);
             Animate((TranslateTransform)bar.RenderTransform, TranslateTransform.XProperty, Sway(-6, 6, 4 + i, i * 0.4));
         }
@@ -222,10 +234,9 @@ public sealed class AnimatedWeatherIcon : Grid
         double[] widths = { 46, 58, 40 };
         for (int i = 0; i < ys.Length; i++)
         {
-            var bar = new Rectangle { Width = widths[i], Height = 5, RadiusX = 2.5, RadiusY = 2.5, RenderTransform = new TranslateTransform() };
+            var bar = new Rectangle { Width = widths[i], Height = 5, RadiusX = 2.5, RadiusY = 2.5, Fill = i == 1 ? WindAccent : Wind, RenderTransform = new TranslateTransform() };
             Canvas.SetLeft(bar, 22);
             Canvas.SetTop(bar, ys[i]);
-            Themed(bar, i == 1 ? "AccentBrush" : "PrimaryText");
             _stage.Children.Add(bar);
             Animate((TranslateTransform)bar.RenderTransform, TranslateTransform.XProperty, Sway(-5, 9, 3.2 + i * 0.6, i * 0.3));
         }
@@ -233,17 +244,20 @@ public sealed class AnimatedWeatherIcon : Grid
 
     // ---- Helpers -----------------------------------------------------------
 
-    private static Ellipse Disc(double cx, double cy, double r, string key)
+    private static Ellipse Disc(double cx, double cy, double r, Brush brush)
     {
-        var e = new Ellipse { Width = 2 * r, Height = 2 * r };
+        var e = new Ellipse { Width = 2 * r, Height = 2 * r, Fill = brush };
         Canvas.SetLeft(e, cx - r);
         Canvas.SetTop(e, cy - r);
-        Themed(e, key);
         return e;
     }
 
-    private static void Themed(Shape s, string key, bool stroke = false)
-        => s.SetResourceReference(stroke ? Shape.StrokeProperty : Shape.FillProperty, key);
+    private static SolidColorBrush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
 
     private static DoubleAnimation Loop(double from, double to, double seconds, double beginSeconds = 0) => new(from, to, new Duration(TimeSpan.FromSeconds(seconds)))
     {
