@@ -51,7 +51,6 @@ No web technologies.
 
 - Native Windows desktop bar
 - Multi-monitor support
-- Independent monitor themes
 - Automatic DPI awareness
 - Auto-hide support
 - Fullscreen friendly
@@ -165,10 +164,8 @@ BuffMyBar is built around independent services.
 │          Animation Framework                │
 │ Glitch │ Fade │ Spawn │ Scan │ Typewriter   │
 ├─────────────────────────────────────────────┤
-│             Theme Manager                   │
-│ Buff │ Windows │ Future Themes              │
-├─────────────────────────────────────────────┤
-│         Windows Theme Service               │
+│          Windows Theme Sync                 │
+│ Light / Dark │ Accent │ Auto-follow         │
 ├─────────────────────────────────────────────┤
 │        Windows 11 / WPF / .NET 8            │
 └─────────────────────────────────────────────┘
@@ -329,7 +326,7 @@ It complements Windows while integrating naturally with it.
 
 Yes.
 
-Each monitor can use different layouts and themes.
+Each monitor gets its own bar, and they all follow the Windows theme.
 
 ---
 

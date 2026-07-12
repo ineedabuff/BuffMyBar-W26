@@ -31,11 +31,4 @@ public static class BarConfig
 
     /// <summary>Réduit les fenêtres plein écran (non exclusif) à la zone de travail.</summary>
     public static readonly bool ReclaimFullscreenWindows = true;
-
-    /// <summary>
-    /// En thème « windows », conserve l'accent #ddff24 au lieu de l'accent système.
-    /// À false : le thème « windows » suit aussi l'accent Windows (le thème « buff »
-    /// garde son #ddff24 dans tous les cas — ce drapeau n'agit qu'en mode windows).
-    /// </summary>
-    public static readonly bool KeepBuffAccent = false;
 }

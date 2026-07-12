@@ -138,17 +138,10 @@ public partial class App : Application
         }));
     }
 
-    /// <summary>Réapplique l'option « accent externe » à toutes les barres (toggle en direct).</summary>
-    public void RefreshExternalAccentAll()
-    {
-        foreach (MainWindow bar in _bars)
-            bar.RefreshExternalAccent();
-    }
-
     /// <summary>Réapplique le thème puis reconstruit les barres (après changement de config).</summary>
     public void ApplyConfigAndRestart()
     {
-        ThemeService.ApplyConfigTheme();
+        ThemeService.Apply();
         RestartBars();
     }
 

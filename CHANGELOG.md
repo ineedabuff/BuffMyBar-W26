@@ -33,6 +33,13 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - Updated project documentation.
 - AutoStartService now avoids Run key registration when the elevated startup task exists.
 - Sensor diagnostics log path moved to `%AppData%\BuffMyBar-W26\logs`.
+- The bar now always follows the Windows 11 theme (light/dark + accent); custom color themes were removed.
+
+### Removed
+
+- Custom color themes (Buff / Cyber) and the theme picker in Settings and the context menu.
+- The "inverted accent" option for the external monitor.
+- Dead `SettingsService` (registry theme store) and the `themes/` palette files.
 
 ### Fixed
 

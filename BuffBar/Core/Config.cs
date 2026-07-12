@@ -42,9 +42,6 @@ public sealed class GoogleCalendarConfig
 /// </summary>
 public sealed class Config
 {
-    /// <summary>Nom du thème : buff | windows | cyber (fichier themes\&lt;nom&gt;.json).</summary>
-    public string Theme { get; set; } = "buff";
-
     /// <summary>Hauteur de la barre en DIP.</summary>
     public double Height { get; set; } = 36;
 
@@ -53,9 +50,6 @@ public sealed class Config
 
     /// <summary>Mode jeu : ajoute la latence (ping) au widget réseau.</summary>
     public bool GamingMode { get; set; } = false;
-
-    /// <summary>Accent inversé (#ddff24) sur le moniteur externe.</summary>
-    public bool ExternalAccent { get; set; } = false;
 
     /// <summary>Fond acrylique translucide (façon barre des tâches).</summary>
     public bool Acrylic { get; set; } = true;

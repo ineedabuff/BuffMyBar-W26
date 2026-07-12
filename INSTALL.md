@@ -49,9 +49,8 @@ Au premier lancement, l'app crée **`%AppData%\BuffMyBar-W26\`** :
 
 ```
 %AppData%\BuffMyBar-W26\
-├── settings.json        réglages (thème, hauteur, widgets, OBS, Google…)
+├── settings.json        réglages (hauteur, widgets, OBS, Google…)
 ├── google_token.json    jetons Google Agenda (si connecté)
-├── themes\              buff.json / windows.json / cyber.json
 └── logs\                buffbar.log
 ```
 
