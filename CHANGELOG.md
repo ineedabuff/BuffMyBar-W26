@@ -23,6 +23,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Changed
 
+- Audio visualizer now idles at ~5 FPS and stops redundant redraws during silence, and pauses rendering entirely while a fullscreen app (game) is in the foreground.
 - Improved widget rendering.
 - Improved OBS integration.
 - Refined audio visualizer.
