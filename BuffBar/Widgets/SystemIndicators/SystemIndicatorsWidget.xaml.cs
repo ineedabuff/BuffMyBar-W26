@@ -19,7 +19,7 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
     private static readonly Brush AlertBrush = Frozen(0xFF, 0x31, 0x31);
 
     private readonly SystemMetricsService _metrics = new();
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
     private readonly DispatcherTimer _blinkTimer;
     private readonly bool _showOnThisMonitor;
     private readonly List<TextBlock> _criticalLabels = new();
@@ -40,12 +40,6 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
 
         InitializeComponent();
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(2)
-        };
-        _timer.Tick += (_, _) => Refresh();
-
         _blinkTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromMilliseconds(650)
@@ -61,12 +55,14 @@ public partial class SystemIndicatorsWidget : UserControl, IBarWidget
             }
 
             Refresh();
-            _timer.Start();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(2), Refresh);
         };
 
         Unloaded += (_, _) =>
         {
-            _timer.Stop();
+            _tick?.Dispose();
+            _tick = null;
             _blinkTimer.Stop();
             _metrics.Dispose();
         };

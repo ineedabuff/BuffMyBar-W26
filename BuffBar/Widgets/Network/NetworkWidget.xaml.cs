@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
 
@@ -25,9 +24,9 @@ public partial class NetworkWidget : UserControl, IBarWidget
     private static readonly Brush PingBad = Frozen(0xFF, 0x31, 0x31);
 
     private readonly NetworkService _service = new();
-    private readonly DispatcherTimer _cycle;
-    private readonly DispatcherTimer _refresh;
-    private readonly DispatcherTimer _ping;
+    private IDisposable? _cycleTick;
+    private IDisposable? _refreshTick;
+    private IDisposable? _pingTick;
 
     private bool _showPublic;
     private string? _publicIp;
@@ -41,51 +40,38 @@ public partial class NetworkWidget : UserControl, IBarWidget
     {
         InitializeComponent();
 
-        _cycle = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(3)
-        };
-        _cycle.Tick += (_, _) =>
-        {
-            _showPublic = !_showPublic;
-            UpdateDisplay(animated: true);
-        };
-
-        _refresh = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMinutes(5)
-        };
-        _refresh.Tick += async (_, _) => await RefreshPublic();
-
-        _ping = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(2)
-        };
-        _ping.Tick += async (_, _) => await RefreshPing();
-
         PingIcon.Text = Gauge;
 
         Loaded += async (_, _) =>
         {
             UpdateDisplay(animated: false);
             await RefreshPublic();
-            _cycle.Start();
-            _refresh.Start();
+            _cycleTick?.Dispose();
+            _refreshTick?.Dispose();
+            _cycleTick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(3), CycleDisplay);
+            _refreshTick = WidgetScheduler.Subscribe(TimeSpan.FromMinutes(5), () => _ = RefreshPublic());
 
             if (BarConfig.GamingMode)
             {
                 PingIcon.Visibility = Visibility.Visible;
                 Ping.Visibility = Visibility.Visible;
                 await RefreshPing();
-                _ping.Start();
+                _pingTick?.Dispose();
+                _pingTick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(2), () => _ = RefreshPing());
             }
         };
         Unloaded += (_, _) =>
         {
-            _cycle.Stop();
-            _refresh.Stop();
-            _ping.Stop();
+            _cycleTick?.Dispose(); _cycleTick = null;
+            _refreshTick?.Dispose(); _refreshTick = null;
+            _pingTick?.Dispose(); _pingTick = null;
         };
+    }
+
+    private void CycleDisplay()
+    {
+        _showPublic = !_showPublic;
+        UpdateDisplay(animated: true);
     }
 
     private async Task RefreshPublic()

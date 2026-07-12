@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Effects;
 using BuffBar.Services;
@@ -22,7 +21,7 @@ public partial class MediaWidget : UserControl, IBarWidget
     private const string Pause = "\uF04C";   // pause (en lecture -> clic pour mettre en pause)
 
     private readonly MediaService _media = new();
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
     private bool _busy;
     private string? _lastTrack;   // dernière piste vue, pour détecter les changements
     private bool? _lastPlaying;   // dernier état lecture/pause, pour détecter les bascules
@@ -34,14 +33,13 @@ public partial class MediaWidget : UserControl, IBarWidget
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
+        Loaded += async (_, _) =>
         {
-            Interval = TimeSpan.FromSeconds(1)
+            await Refresh();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(1), () => _ = Refresh());
         };
-        _timer.Tick += async (_, _) => await Refresh();
-
-        Loaded += async (_, _) => { await Refresh(); _timer.Start(); };
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) => { _tick?.Dispose(); _tick = null; };
     }
 
     private async Task Refresh()

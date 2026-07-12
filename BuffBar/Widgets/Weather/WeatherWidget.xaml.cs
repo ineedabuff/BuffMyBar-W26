@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
 
@@ -16,7 +15,7 @@ namespace BuffBar.Widgets.Weather;
 public partial class WeatherWidget : UserControl, IBarWidget
 {
     private readonly WeatherService _service = new(BarConfig.WeatherLocation);
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
     private bool _busy;
     private bool _hasData;
     private WeatherInfo _last;
@@ -29,14 +28,13 @@ public partial class WeatherWidget : UserControl, IBarWidget
         InitializeComponent();
         Root.Visibility = Visibility.Collapsed;
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
+        Loaded += async (_, _) =>
         {
-            Interval = TimeSpan.FromMinutes(15)
+            await Refresh();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromMinutes(15), () => _ = Refresh());
         };
-        _timer.Tick += async (_, _) => await Refresh();
-
-        Loaded += async (_, _) => { await Refresh(); _timer.Start(); };
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) => { _tick?.Dispose(); _tick = null; };
 
         // Ouverture de l'applet au survol, seulement si des données sont disponibles.
         Widgets.Common.HoverPopup.Attach(

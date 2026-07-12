@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
 
@@ -16,8 +15,8 @@ namespace BuffBar.Widgets.Bluetooth;
 public partial class BluetoothWidget : UserControl, IBarWidget
 {
     private readonly BluetoothService _service = new();
-    private readonly DispatcherTimer _cycle;    // alternance ~3 s
-    private readonly DispatcherTimer _refresh;  // re-énumération
+    private IDisposable? _cycleTick;    // alternance ~3 s
+    private IDisposable? _refreshTick;  // re-énumération
 
     private IReadOnlyList<BtDevice> _devices = Array.Empty<BtDevice>();
     private int _index;
@@ -31,27 +30,28 @@ public partial class BluetoothWidget : UserControl, IBarWidget
         InitializeComponent();
         Root.Visibility = Visibility.Collapsed;
 
-        _cycle = new DispatcherTimer(DispatcherPriority.Background)
+        Loaded += async (_, _) =>
         {
-            Interval = TimeSpan.FromSeconds(3)
+            await RefreshList();
+            _cycleTick?.Dispose();
+            _refreshTick?.Dispose();
+            _cycleTick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(3), CycleDevice);
+            _refreshTick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(8), () => _ = RefreshList());
         };
-        _cycle.Tick += (_, _) =>
+        Unloaded += (_, _) =>
         {
-            if (_devices.Count > 1)
-            {
-                _index = (_index + 1) % _devices.Count;
-                UpdateDisplay();
-            }
+            _cycleTick?.Dispose(); _cycleTick = null;
+            _refreshTick?.Dispose(); _refreshTick = null;
         };
+    }
 
-        _refresh = new DispatcherTimer(DispatcherPriority.Background)
+    private void CycleDevice()
+    {
+        if (_devices.Count > 1)
         {
-            Interval = TimeSpan.FromSeconds(8)
-        };
-        _refresh.Tick += async (_, _) => await RefreshList();
-
-        Loaded += async (_, _) => { await RefreshList(); _cycle.Start(); _refresh.Start(); };
-        Unloaded += (_, _) => { _cycle.Stop(); _refresh.Stop(); };
+            _index = (_index + 1) % _devices.Count;
+            UpdateDisplay();
+        }
     }
 
     private async Task RefreshList()

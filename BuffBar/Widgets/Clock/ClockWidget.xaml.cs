@@ -2,8 +2,8 @@ using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using BuffBar.Core;
+using BuffBar.Services;
 
 namespace BuffBar.Widgets.Clock;
 
@@ -17,7 +17,7 @@ namespace BuffBar.Widgets.Clock;
 public partial class ClockWidget : UserControl, IBarWidget
 {
     private static readonly CultureInfo Culture = new("fr-CA");
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
 
     public string WidgetId => "clock";
     public FrameworkElement View => this;
@@ -26,14 +26,13 @@ public partial class ClockWidget : UserControl, IBarWidget
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer(DispatcherPriority.Render)
+        Loaded += (_, _) =>
         {
-            Interval = TimeSpan.FromSeconds(1)
+            Refresh();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(1), Refresh);
         };
-        _timer.Tick += (_, _) => Refresh();
-
-        Loaded += (_, _) => { Refresh(); _timer.Start(); };
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) => { _tick?.Dispose(); _tick = null; };
 
         // Ouverture du calendrier au survol (recentré sur le mois courant).
         Widgets.Common.HoverPopup.Attach(Root, Flyout, Calendar, onOpening: Calendar.ResetToToday);

@@ -1,13 +1,13 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Threading;
 
 namespace BuffBar.Services;
 
 public sealed class ObsProcessWatcher : IDisposable
 {
-    private readonly DispatcherTimer _timer;
+    private readonly TimeSpan _interval;
+    private IDisposable? _tick;
     private bool _isRunning;
 
     public event EventHandler<bool>? IsRunningChanged;
@@ -27,20 +27,21 @@ public sealed class ObsProcessWatcher : IDisposable
 
     public ObsProcessWatcher(TimeSpan? interval = null)
     {
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = interval ?? TimeSpan.FromSeconds(2)
-        };
-        _timer.Tick += OnTick;
+        _interval = interval ?? TimeSpan.FromSeconds(2);
     }
 
     public void Start()
     {
         Refresh();
-        _timer.Start();
+        _tick?.Dispose();
+        _tick = WidgetScheduler.Subscribe(_interval, Refresh);
     }
 
-    public void Stop() => _timer.Stop();
+    public void Stop()
+    {
+        _tick?.Dispose();
+        _tick = null;
+    }
 
     public void Refresh()
     {
@@ -70,11 +71,5 @@ public sealed class ObsProcessWatcher : IDisposable
         }
     }
 
-    private void OnTick(object? sender, EventArgs e) => Refresh();
-
-    public void Dispose()
-    {
-        Stop();
-        _timer.Tick -= OnTick;
-    }
+    public void Dispose() => Stop();
 }

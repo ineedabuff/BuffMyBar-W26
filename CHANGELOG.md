@@ -34,6 +34,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - AutoStartService now avoids Run key registration when the elevated startup task exists.
 - Sensor diagnostics log path moved to `%AppData%\BuffMyBar-W26\logs`.
 - The bar now always follows the Windows 11 theme (light/dark + accent); custom color themes were removed.
+- Widget polling timers unified into a single shared `WidgetScheduler` tick (~13 per-widget timers collapsed to one), reducing UI-thread wake-ups.
 
 ### Removed
 
@@ -43,6 +44,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Fixed
 
+- Bluetooth widget no longer surfaces unresolved numeric device names (e.g. "4") instead of the real connected device.
 - Widget alignment issues.
 - Theme synchronization bugs.
 - Volume widget mute indicator.

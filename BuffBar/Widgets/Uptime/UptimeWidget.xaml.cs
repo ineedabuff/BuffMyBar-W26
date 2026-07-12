@@ -1,8 +1,8 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using BuffBar.Core;
+using BuffBar.Services;
 
 namespace BuffBar.Widgets.Uptime;
 
@@ -12,7 +12,7 @@ namespace BuffBar.Widgets.Uptime;
 /// </summary>
 public partial class UptimeWidget : UserControl, IBarWidget
 {
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
 
     public string WidgetId => "uptime";
     public FrameworkElement View => this;
@@ -21,14 +21,13 @@ public partial class UptimeWidget : UserControl, IBarWidget
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
+        Loaded += (_, _) =>
         {
-            Interval = TimeSpan.FromSeconds(30)
+            Refresh();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(30), Refresh);
         };
-        _timer.Tick += (_, _) => Refresh();
-
-        Loaded += (_, _) => { Refresh(); _timer.Start(); };
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) => { _tick?.Dispose(); _tick = null; };
     }
 
     private void Refresh()

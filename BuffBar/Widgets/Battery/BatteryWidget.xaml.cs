@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using BuffBar.Core;
 using BuffBar.Services;
 
@@ -21,7 +20,7 @@ public partial class BatteryWidget : UserControl, IBarWidget
     private const string Quarter = "\uF243";  // fa-battery-quarter
     private const string Empty = "\uF244";  // fa-battery-empty
 
-    private readonly DispatcherTimer _timer;
+    private IDisposable? _tick;
 
     public string WidgetId => "battery";
     public FrameworkElement View => this;
@@ -30,14 +29,13 @@ public partial class BatteryWidget : UserControl, IBarWidget
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer(DispatcherPriority.Background)
+        Loaded += (_, _) =>
         {
-            Interval = TimeSpan.FromSeconds(5)
+            Refresh();
+            _tick?.Dispose();
+            _tick = WidgetScheduler.Subscribe(TimeSpan.FromSeconds(5), Refresh);
         };
-        _timer.Tick += (_, _) => Refresh();
-
-        Loaded += (_, _) => { Refresh(); _timer.Start(); };
-        Unloaded += (_, _) => _timer.Stop();
+        Unloaded += (_, _) => { _tick?.Dispose(); _tick = null; };
     }
 
     private void Refresh()

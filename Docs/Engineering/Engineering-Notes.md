@@ -28,6 +28,20 @@ Le poste le plus coûteux au repos. Deux garde-fous :
 ligne sur disque à chaque seconde. Activer via `BUFFBAR_VERBOSE=1` (ou build
 Debug) pour un rapport de bug. Voir `Services/Logger.cs`.
 
+### Ordonnanceur de widgets
+
+`Services/WidgetScheduler.cs` : un seul `DispatcherTimer` (cadence de base 500 ms)
+remplace la dizaine de timers de scrutation. Chaque widget s'abonne avec sa
+période (`Subscribe(interval, callback)`) et libère le jeton dans `Unloaded`.
+Tous les réveils sont regroupés sur le même battement.
+
+Migrés : horloge, média, batterie, uptime, météo, indicateurs système (métriques
+2 s), réseau (cycle/refresh/ping), Bluetooth (cycle/refresh), `ObsProcessWatcher`.
+
+Restent **natifs** (pas de la scrutation régulière, ou réactivité requise) :
+rendu du visualiseur (~30 FPS), animations glitch/marquee, clignotement d'alerte
+(650 ms), volume (400 ms), gardien de l'AppBar (800 ms), anti-rebond d'affichage.
+
 ### Mesurer
 
 `Docs/Engineering/measure-idle.ps1` échantillonne le CPU/RAM du processus pour
