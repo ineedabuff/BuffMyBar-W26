@@ -177,7 +177,8 @@ public sealed class WeatherService
                 try { hourListing = await Http.GetStringAsync(hourUrl); }
                 catch { continue; }
 
-                string? file = Regex.Matches(hourListing, $"href=\"([^\"]*_s{code}_fr\\.xml)\"")
+                // Le code de site inclut déjà le préfixe « s » (ex. s0000145).
+                string? file = Regex.Matches(hourListing, $"href=\"([^\"]*_{code}_fr\\.xml)\"")
                     .Select(m => m.Groups[1].Value)
                     .OrderBy(f => f, StringComparer.Ordinal)
                     .LastOrDefault();
