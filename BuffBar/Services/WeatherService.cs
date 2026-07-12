@@ -213,7 +213,10 @@ public sealed class WeatherService
         // courante : on retombe alors sur la première période de prévision.
         int icon = ReadIntNullable(cc.Element("iconCode")) ?? FirstForecastIcon(group);
         WeatherCondition condition = EcccWeather.Map(icon);
-        bool night = EcccWeather.IsNight(icon);
+
+        // Jour/nuit d'après le lever/coucher réels : le code de prévision de repli
+        // peut désigner une période de nuit alors qu'il fait encore jour.
+        bool night = ComputeNight(doc.Root?.Element("riseSet")) ?? EcccWeather.IsNight(icon);
 
         int temp = ReadRounded(cc.Element("temperature"));
         int feels = ReadRoundedNullable(cc.Element("windChill"))
@@ -311,6 +314,37 @@ public sealed class WeatherService
             word = word[..3];
 
         return word.Length > 0 ? char.ToUpper(word[0], Culture) + word[1..] : word;
+    }
+
+    /// <summary>
+    /// Vrai s'il fait nuit d'après les heures UTC de lever/coucher du soleil.
+    /// Null si <c>riseSet</c> est absent ou illisible (l'appelant retombe alors sur
+    /// le code d'icône).
+    /// </summary>
+    private static bool? ComputeNight(XElement? riseSet)
+    {
+        if (riseSet is null)
+            return null;
+
+        DateTime? sunrise = ReadRiseUtc(riseSet, "sunrise");
+        DateTime? sunset = ReadRiseUtc(riseSet, "sunset");
+        if (sunrise is null || sunset is null)
+            return null;
+
+        DateTime now = DateTime.UtcNow;
+        return now < sunrise.Value || now >= sunset.Value;
+    }
+
+    private static DateTime? ReadRiseUtc(XElement riseSet, string name)
+    {
+        XElement? dt = riseSet.Elements("dateTime").FirstOrDefault(e =>
+            (string?)e.Attribute("zone") == "UTC" && (string?)e.Attribute("name") == name);
+
+        string? ts = dt?.Element("timeStamp")?.Value;
+        return ts != null && DateTime.TryParseExact(ts, "yyyyMMddHHmmss", CultureInfo.InvariantCulture,
+                   DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out DateTime v)
+            ? v
+            : null;
     }
 
     private static int FirstForecastIcon(XElement? group)
