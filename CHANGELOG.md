@@ -23,6 +23,8 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Changed
 
+- Audio visualizer now idles at ~5 FPS and stops redundant redraws during silence, and pauses rendering entirely while a fullscreen app (game) is in the foreground.
+- High-frequency diagnostic logging is now opt-in (`BUFFBAR_VERBOSE=1` or Debug builds); audio capture no longer writes to disk every second during normal use.
 - Improved widget rendering.
 - Improved OBS integration.
 - Refined audio visualizer.

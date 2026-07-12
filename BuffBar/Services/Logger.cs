@@ -15,6 +15,13 @@ public static class Logger
     /// <summary>Chemin complet du fichier journal.</summary>
     public static string LogPath { get; } = ResolvePath();
 
+    /// <summary>
+    /// Active les traces de diagnostic à haute fréquence (<see cref="Verbose"/>).
+    /// Désactivé par défaut : en usage normal, la capture audio n'écrit plus sur
+    /// disque à chaque seconde. À activer pour un rapport de bug (voir App).
+    /// </summary>
+    public static bool VerboseEnabled { get; set; }
+
     private static string ResolvePath()
     {
         try
@@ -32,6 +39,17 @@ public static class Logger
         {
             return string.Empty;
         }
+    }
+
+    /// <summary>
+    /// Trace à haute fréquence (boucles de capture, etc.). Ignorée tant que
+    /// <see cref="VerboseEnabled"/> est faux, pour éviter d'écrire sur disque en
+    /// continu pendant le fonctionnement normal.
+    /// </summary>
+    public static void Verbose(string message)
+    {
+        if (!VerboseEnabled) return;
+        Log(message);
     }
 
     public static void Log(string message)

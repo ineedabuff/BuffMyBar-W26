@@ -257,10 +257,17 @@ public sealed class AppBarManager
                     break;
 
                 case ABN_FULLSCREENAPP:
+                    // lParam != 0 -> une application plein écran vient de s'ouvrir.
+                    bool fullscreenActive = lParam != IntPtr.Zero;
+
+                    // Diffuse l'état : les widgets décoratifs coûteux (visualiseur)
+                    // se mettent en veille pendant les jeux plein écran.
+                    FullscreenState.Set(fullscreenActive);
+
                     // Par défaut on RESTE au-dessus (barre inviolable). Comportement
                     // "barre des tâches" (céder le dessus) seulement si KeepBarOnTop=false.
                     if (!BarConfig.KeepBarOnTop)
-                        _window.Topmost = lParam == IntPtr.Zero;
+                        _window.Topmost = !fullscreenActive;
                     handled = true;
                     break;
             }
