@@ -3,6 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:BuffBar.Widgets.Weather">
 
+    <!-- Surcharge locale : tout le texte du flyout en blanc (le reste de l'app garde le thème). -->
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="PrimaryText" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SubtleText"  Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FFFFFF"/>
+    </UserControl.Resources>
+
     <Border Style="{StaticResource FlyoutBorder}" MinWidth="260">
         <StackPanel>
 

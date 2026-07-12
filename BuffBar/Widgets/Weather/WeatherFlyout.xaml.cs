@@ -46,15 +46,15 @@ public partial class WeatherFlyout : UserControl
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
-        panel.Children.Add(new TextBlock
+        var icon = new AnimatedWeatherIcon
         {
-            Text = WeatherIcons.Glyph(d.Condition),
-            Style = (Style)FindResource("ModuleText"),
-            Foreground = (System.Windows.Media.Brush)FindResource("AccentBrush"),
-            FontSize = 18,
+            Width = 26,
+            Height = 26,
             Margin = new Thickness(0, 4, 0, 4),
             HorizontalAlignment = HorizontalAlignment.Center
-        });
+        };
+        icon.Set(d.Condition, night: false);
+        panel.Children.Add(icon);
 
         panel.Children.Add(new TextBlock
         {
