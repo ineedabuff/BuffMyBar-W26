@@ -43,6 +43,18 @@ public sealed class BluetoothService
         return list;
     }
 
+    /// <summary>
+    /// Vrai pour un nom non résolu (ex. périphérique BLE annonçant « 4 ») : que des
+    /// chiffres. Ces entrées parasites masquaient le vrai dispositif dans le widget.
+    /// </summary>
+    private static bool IsUnresolvedName(string name)
+    {
+        foreach (char c in name)
+            if (!char.IsDigit(c))
+                return false;
+        return true;
+    }
+
     private static async Task AddFromSelector(string selector, List<BtDevice> list, HashSet<string> seen)
     {
         DeviceInformationCollection found =
@@ -50,8 +62,8 @@ public sealed class BluetoothService
 
         foreach (DeviceInformation di in found)
         {
-            string name = di.Name;
-            if (string.IsNullOrWhiteSpace(name) || !seen.Add(name))
+            string name = (di.Name ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(name) || IsUnresolvedName(name) || !seen.Add(name))
                 continue;
 
             int battery = -1;
