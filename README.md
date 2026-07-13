@@ -250,12 +250,11 @@ This architecture keeps widgets simple while allowing the framework to evolve in
 - System monitor widget and flyout
 - Hover flyout framework (calendar, weather, system)
 - Audio visualizer idle throttling + fullscreen pause
-- Update check + winget manifest
+- Update check and one-click auto-update (download + install)
 
 ## Planned
 
-- Winget distribution (manifest is ready to submit)
-- Full auto-update (download + install)
+- Winget distribution (automated on release — set up the winget-pkgs token to enable)
 - Windows toast notifications
 - Plugin API
 - Workspace support

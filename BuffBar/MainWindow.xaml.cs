@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -223,15 +222,6 @@ public partial class MainWindow : Window
     }
 
     private void OnUpdate(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(UpdateService.ReleasesUrl) { UseShellExecute = true });
-        }
-        catch
-        {
-            // Navigateur indisponible : sans effet.
-        }
-    }
+        => (Application.Current as App)?.StartUpdate();
 }
 

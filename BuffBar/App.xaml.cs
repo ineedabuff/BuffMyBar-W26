@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -13,6 +14,7 @@ public partial class App : Application
     private static Mutex? _instanceMutex;
     private readonly List<MainWindow> _bars = new();
     private bool _restarting;
+    private bool _updating;
     private DispatcherTimer? _displayDebounce;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -139,6 +141,45 @@ public partial class App : Application
             foreach (MainWindow bar in _bars)
                 bar.RefreshThemeSurface();
         }));
+    }
+
+    /// <summary>
+    /// Télécharge l'installateur de la dernière release puis le lance, et ferme
+    /// l'application pour qu'il puisse remplacer les fichiers. Repli : ouvre la page
+    /// des releases si aucun installateur n'est attaché (ou en cas d'échec).
+    /// </summary>
+    public async void StartUpdate()
+    {
+        if (_updating)
+            return;
+        _updating = true;
+
+        string? installer = await UpdateService.DownloadInstallerAsync();
+
+        if (installer is null)
+        {
+            OpenReleasesPage();
+            _updating = false;
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(installer) { UseShellExecute = true });
+            Shutdown();   // libère les fichiers pour que l'installateur puisse les remplacer
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"App: échec du lancement de l'installateur : {ex.Message}");
+            OpenReleasesPage();
+            _updating = false;
+        }
+    }
+
+    private static void OpenReleasesPage()
+    {
+        try { Process.Start(new ProcessStartInfo(UpdateService.ReleasesUrl) { UseShellExecute = true }); }
+        catch { /* navigateur indisponible */ }
     }
 
     /// <summary>

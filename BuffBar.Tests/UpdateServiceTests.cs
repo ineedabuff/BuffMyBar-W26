@@ -43,4 +43,44 @@ public class UpdateServiceTests
     {
         Assert.Null(UpdateService.ParseVersion(tag));
     }
+
+    [Fact]
+    public void ParseRelease_ExtractsTagAndExeInstaller()
+    {
+        const string json = """
+        {
+          "tag_name": "v0.9.1",
+          "assets": [
+            { "name": "BuffBar-win-x64.zip", "browser_download_url": "https://example/BuffBar-win-x64.zip" },
+            { "name": "Buffmybar-W26.exe",   "browser_download_url": "https://example/Buffmybar-W26.exe" }
+          ]
+        }
+        """;
+
+        (string? tag, string? installer) = UpdateService.ParseRelease(json);
+
+        Assert.Equal("v0.9.1", tag);
+        Assert.Equal("https://example/Buffmybar-W26.exe", installer);
+    }
+
+    [Fact]
+    public void ParseRelease_NoExeAsset_ReturnsNullInstaller()
+    {
+        const string json = """
+        { "tag_name": "v0.9.1", "assets": [ { "name": "notes.txt", "browser_download_url": "https://x/notes.txt" } ] }
+        """;
+
+        (string? tag, string? installer) = UpdateService.ParseRelease(json);
+
+        Assert.Equal("v0.9.1", tag);
+        Assert.Null(installer);
+    }
+
+    [Fact]
+    public void ParseRelease_Garbage_ReturnsNulls()
+    {
+        (string? tag, string? installer) = UpdateService.ParseRelease("not json");
+        Assert.Null(tag);
+        Assert.Null(installer);
+    }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
@@ -7,28 +8,34 @@ using System.Threading.Tasks;
 namespace BuffBar.Services;
 
 /// <summary>
-/// Vérifie s'il existe une version plus récente sur les Releases GitHub.
+/// Vérifie s'il existe une version plus récente sur les Releases GitHub, et — si
+/// l'utilisateur le demande — télécharge l'installateur de cette release pour le
+/// lancer (mise à jour complète).
 ///
-/// 100 % natif (HttpClient + System.Text.Json). Best-effort et non bloquant :
-/// une panne réseau ou une réponse illisible laisse simplement l'application en
-/// l'état, sans erreur. Ne télécharge ni n'installe rien — expose seulement l'état
-/// « mise à jour disponible », que l'interface propose via le menu contextuel.
+/// 100 % natif (HttpClient + System.Text.Json). Le contrôle est best-effort et non
+/// bloquant : une panne réseau ou une réponse illisible laisse l'application en
+/// l'état. Le téléchargement se fait uniquement depuis l'asset officiel de la
+/// release (HTTPS, dépôt du projet) et n'est déclenché qu'à la demande.
 /// </summary>
 public static class UpdateService
 {
     private const string LatestReleaseApi =
         "https://api.github.com/repos/ineedabuff/BuffMyBar-W26/releases/latest";
 
-    /// <summary>Page des Releases (ouverte quand l'utilisateur clique sur « Mettre à jour »).</summary>
+    /// <summary>Page des Releases (repli si aucun installateur n'est attaché).</summary>
     public const string ReleasesUrl = "https://github.com/ineedabuff/BuffMyBar-W26/releases";
 
-    private static readonly HttpClient Http = CreateClient();
+    private static readonly HttpClient Http = CreateClient(TimeSpan.FromSeconds(10));
+    private static readonly HttpClient DownloadHttp = CreateClient(TimeSpan.FromMinutes(5));
 
     /// <summary>Vrai si une version strictement plus récente est publiée.</summary>
     public static bool UpdateAvailable { get; private set; }
 
     /// <summary>Étiquette de la dernière version publiée (ex. « v0.9.0 »), si connue.</summary>
     public static string? LatestTag { get; private set; }
+
+    /// <summary>URL de téléchargement de l'installateur (.exe) de la release, si présent.</summary>
+    public static string? InstallerUrl { get; private set; }
 
     /// <summary>Émis quand l'état de mise à jour change (sur le thread appelant).</summary>
     public static event Action? Changed;
@@ -37,10 +44,10 @@ public static class UpdateService
     public static Version CurrentVersion =>
         Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0, 0);
 
-    private static HttpClient CreateClient()
+    private static HttpClient CreateClient(TimeSpan timeout)
     {
-        var c = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        // L'API GitHub exige un User-Agent.
+        var c = new HttpClient { Timeout = timeout };
+        // L'API et le CDN GitHub exigent un User-Agent.
         c.DefaultRequestHeaders.UserAgent.ParseAdd("BuffBar-UpdateCheck");
         c.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return c;
@@ -54,18 +61,12 @@ public static class UpdateService
         try
         {
             string json = await Http.GetStringAsync(LatestReleaseApi);
-            using JsonDocument doc = JsonDocument.Parse(json);
+            (string? tag, string? installer) = ParseRelease(json);
 
-            if (!doc.RootElement.TryGetProperty("tag_name", out JsonElement tagEl))
-                return;
-
-            string? tag = tagEl.GetString();
-            if (string.IsNullOrWhiteSpace(tag))
-                return;
-
-            if (IsNewer(CurrentVersion, tag))
+            if (tag is not null && IsNewer(CurrentVersion, tag))
             {
                 LatestTag = tag;
+                InstallerUrl = installer;
                 UpdateAvailable = true;
                 Changed?.Invoke();
             }
@@ -73,6 +74,75 @@ public static class UpdateService
         catch
         {
             // Hors ligne, dépôt sans release, réponse illisible : on ignore.
+        }
+    }
+
+    /// <summary>
+    /// Télécharge l'installateur de la release dans un dossier temporaire.
+    /// Retourne le chemin du fichier, ou null en cas d'échec / absence d'installateur.
+    /// </summary>
+    public static async Task<string?> DownloadInstallerAsync()
+    {
+        if (string.IsNullOrEmpty(InstallerUrl))
+            return null;
+
+        try
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "BuffMyBar-update");
+            Directory.CreateDirectory(dir);
+            string dest = Path.Combine(dir, "Buffmybar-W26-setup.exe");
+
+            using HttpResponseMessage resp = await DownloadHttp.GetAsync(
+                InstallerUrl, HttpCompletionOption.ResponseHeadersRead);
+            resp.EnsureSuccessStatusCode();
+
+            await using (FileStream fs = File.Create(dest))
+                await resp.Content.CopyToAsync(fs);
+
+            Logger.Log($"UpdateService: installateur téléchargé -> {dest}");
+            return dest;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"UpdateService: échec du téléchargement : {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Extrait l'étiquette de version et l'URL de l'installateur (.exe) d'une réponse
+    /// « latest release » de l'API GitHub. Logique pure et testable.
+    /// </summary>
+    internal static (string? Tag, string? InstallerUrl) ParseRelease(string json)
+    {
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(json);
+            JsonElement root = doc.RootElement;
+
+            string? tag = root.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() : null;
+            if (string.IsNullOrWhiteSpace(tag))
+                tag = null;
+
+            string? installer = null;
+            if (root.TryGetProperty("assets", out JsonElement assets) && assets.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement a in assets.EnumerateArray())
+                {
+                    string? name = a.TryGetProperty("name", out JsonElement n) ? n.GetString() : null;
+                    if (name is not null && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        installer = a.TryGetProperty("browser_download_url", out JsonElement u) ? u.GetString() : null;
+                        break;
+                    }
+                }
+            }
+
+            return (tag, installer);
+        }
+        catch
+        {
+            return (null, null);
         }
     }
 

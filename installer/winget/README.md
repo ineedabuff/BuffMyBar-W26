@@ -1,7 +1,24 @@
 # Winget manifest — IneedABUFF.BuffMyBar
 
-Prêt à soumettre à [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs)
-pour permettre `winget install IneedABUFF.BuffMyBar`.
+Permet `winget install IneedABUFF.BuffMyBar` une fois soumis à
+[microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs).
+
+## Automatisé (recommandé)
+
+Le workflow `.github/workflows/winget.yml` soumet automatiquement la mise à jour
+du manifeste à chaque release GitHub publiée (via
+[winget-releaser](https://github.com/vedantmgoyal2009/winget-releaser)). Il faut
+juste, une fois :
+
+1. **Forker** `microsoft/winget-pkgs` sur le compte qui soumettra.
+2. Créer un **PAT classique** (scope `public_repo`) et l'ajouter en secret de dépôt
+   nommé **`WINGET_TOKEN`**.
+3. `release.yml` attache déjà `Buffmybar-W26.exe` à la release → le workflow s'occupe du reste.
+
+La **toute première** soumission d'un nouveau package peut devoir être faite à la
+main (voir ci-dessous) ; ensuite le workflow maintient winget à jour tout seul.
+
+## Soumission manuelle (première fois / secours)
 
 ## À chaque release
 

@@ -21,7 +21,9 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 - Installer opt-in for elevated sensor access.
 - Clean scheduled task removal during uninstall.
 - Update check against GitHub Releases on startup, surfaced as a context-menu item.
-- Winget manifest (`installer/winget/`) for `winget install IneedABUFF.BuffMyBar`.
+- One-click auto-update: the "update" menu item downloads the release installer and launches it (falls back to the releases page if none is attached).
+- Winget manifest (`installer/winget/`) and a `winget.yml` workflow that auto-submits the manifest on each release.
+- Release workflow now builds and attaches the Inno Setup installer (`Buffmybar-W26.exe`), not just the portable ZIP.
 - System monitor flyout on hover of the system indicators: CPU / RAM / GPU / CPU-temperature with live meters.
 - Native animated weather icons (WPF shapes): rotating sun, drifting clouds, falling rain/snow, flashing lightning, drifting fog/wind — day/night aware.
 - Setting to choose where the system indicators show: external monitor, primary monitor, or all monitors.

@@ -28,6 +28,10 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
+; Mise à jour « par-dessus » : ferme l'app en cours pour libérer les fichiers.
+; (L'app se ferme d'elle-même en lançant l'installateur ; ceci couvre les cas limites.)
+CloseApplications=force
+RestartApplications=no
 
 [Languages]
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
