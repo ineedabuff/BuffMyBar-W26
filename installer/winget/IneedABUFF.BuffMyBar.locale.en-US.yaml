@@ -6,7 +6,7 @@ Publisher: IneedABUFF
 PublisherUrl: https://github.com/ineedabuff
 PackageName: BuffMyBar
 PackageUrl: https://github.com/ineedabuff/BuffMyBar-W26
-License: MIT
+License: WTFPL
 LicenseUrl: https://github.com/ineedabuff/BuffMyBar-W26/blob/main/LICENSE
 ShortDescription: A native Windows 11 desktop bar inspired by Linux desktop bars.
 Description: >-
