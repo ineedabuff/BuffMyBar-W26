@@ -11,6 +11,7 @@ Lightweight • Native WPF • Multi-monitor • Windows 11 Integration • Open
 ![UI](https://img.shields.io/badge/WPF-Native-5C2D91?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-WTFPL-red?style=for-the-badge)
 
+
 ---
 
 <img src="Docs/Screenshots/complete-buffbar.png" alt="BuffMyBar Screenshot">
@@ -214,7 +215,7 @@ This architecture keeps widgets simple while allowing the framework to evolve in
 
 # Gallery
 
-## Buffbar with all options ON
+## BuffMyBar with all options ON
 
 ![Buffbar](Docs/Screenshots/complete-buffbar.png)
 
@@ -393,7 +394,7 @@ It is a Windows-native implementation inspired by the same philosophy.
 
 <div align="center">
 
-Made with ❤️ in Québec 🇨🇦
+Made with ☕, 🚬 & ❤️ in Québec 🇨🇦
 
 **BuffMyBar — The desktop bar Windows should have shipped with.**
 
