@@ -9,7 +9,7 @@ Lightweight • Native WPF • Multi-monitor • Windows 11 Integration • Open
 ![Platform](https://img.shields.io/badge/Platform-Windows%2011-0078D4?style=for-the-badge)
 ![Framework](https://img.shields.io/badge/.NET-8-512BD4?style=for-the-badge)
 ![UI](https://img.shields.io/badge/WPF-Native-5C2D91?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
+![License](http://www.wtfpl.net/)
 
 ---
 
