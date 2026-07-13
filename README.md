@@ -363,7 +363,7 @@ The goal is to rely on documented Windows APIs to minimize compatibility issues.
 
 # License
 
-BuffMyBar is released under the MIT License.
+BuffMyBar is released under the WTFPL License.
 
 See:
 
