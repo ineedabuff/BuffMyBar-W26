@@ -129,7 +129,7 @@ public partial class SettingsWindow : Window
         };
 
         ConfigService.Save(c);
-        (Application.Current as App)?.ApplyConfigAndRestart();
+        (Application.Current as App)?.ApplyConfigLive();
         Close();
     }
 

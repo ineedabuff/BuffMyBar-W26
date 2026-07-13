@@ -28,6 +28,8 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Changed
 
+- Settings now apply live: toggling widgets recomposes the bar in place instead of restarting it (no flicker, no position loss).
+- The AppBar re-registers on Explorer restart (`TaskbarCreated`) and self-heals its reserved space when it's lost, so windows no longer slip under the bar and manual "reload position" is rarely needed.
 - Weather now uses Environment Canada's official free citypage feed (accurate Canadian data, no API key) instead of wttr.in; falls back to the first forecast period when a station has no current-condition icon.
 - Audio visualizer now idles at ~5 FPS and stops redundant redraws during silence, and pauses rendering entirely while a fullscreen app (game) is in the foreground.
 - High-frequency diagnostic logging is now opt-in (`BUFFBAR_VERBOSE=1` or Debug builds); audio capture no longer writes to disk every second during normal use.

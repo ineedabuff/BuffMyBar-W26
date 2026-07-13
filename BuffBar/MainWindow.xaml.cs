@@ -106,6 +106,36 @@ public partial class MainWindow : Window
         LeftRegion.Children.Add(widget);
     }
 
+    /// <summary>
+    /// Applique la configuration « à chaud » : reconstruit les widgets et re-réserve
+    /// l'espace SANS recréer la fenêtre ni ré-enregistrer l'AppBar (pas de flicker,
+    /// pas de perte de position). Remplace le redémarrage complet au changement de réglage.
+    /// </summary>
+    public void ApplyConfigLive()
+    {
+        RecomposeWidgets();
+
+        if (_appBar is not null)
+        {
+            _appBar.BarHeightLogical = BarConfig.BarHeight;
+            _appBar.RefreshScreenCaptureMode();
+            _appBar.Reassert();
+        }
+
+        Height = BarConfig.BarHeight;
+        BackdropService.Refresh(this);
+    }
+
+    private void RecomposeWidgets()
+    {
+        // Vider les régions déclenche l'événement Unloaded des widgets (arrêt de leurs
+        // timers/abonnements), puis on les reconstruit selon la config courante.
+        LeftRegion.Children.Clear();
+        CenterRegion.Content = null;
+        RightRegion.Children.Clear();
+        ComposeWidgets();
+    }
+
     private void OpenSettings()
     {
         var win = new SettingsWindow { Owner = this };

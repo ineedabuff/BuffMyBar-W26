@@ -141,11 +141,15 @@ public partial class App : Application
         }));
     }
 
-    /// <summary>Réapplique le thème puis reconstruit les barres (après changement de config).</summary>
-    public void ApplyConfigAndRestart()
+    /// <summary>
+    /// Applique la config « à chaud » (thème + widgets + position) sur les barres
+    /// existantes, sans les recréer. Utilisé à l'enregistrement des Paramètres.
+    /// </summary>
+    public void ApplyConfigLive()
     {
         ThemeService.Apply();
-        RestartBars();
+        foreach (MainWindow bar in _bars)
+            bar.ApplyConfigLive();
     }
 
     protected override void OnExit(ExitEventArgs e)

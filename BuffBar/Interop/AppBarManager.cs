@@ -29,6 +29,7 @@ public sealed class AppBarManager
     private IntPtr _hwnd;
     private HwndSource? _source;
     private uint _callbackId;
+    private uint _taskbarCreated;
     private bool _registered;
     private DispatcherTimer? _guard;
 
@@ -46,6 +47,10 @@ public sealed class AppBarManager
         _hwnd = new WindowInteropHelper(_window).Handle;
         _source = HwndSource.FromHwnd(_hwnd);
         _source?.AddHook(WndProc);
+
+        // Émis quand l'Explorateur (re)démarre : toutes les AppBars sont alors
+        // perdues et doivent se ré-inscrire.
+        _taskbarCreated = (uint)RegisterWindowMessage("TaskbarCreated");
 
         MakeToolWindow();
         ApplyScreenCaptureMode();
@@ -119,7 +124,18 @@ public sealed class AppBarManager
         _registered = true;
     }
 
-    private void UpdatePosition()
+    /// <summary>Ré-inscrit au besoin puis réserve à nouveau l'espace (config à chaud).</summary>
+    public void Reassert()
+    {
+        if (!_registered)
+            Register();
+        UpdatePosition();
+    }
+
+    /// <summary>Réapplique le mode capture d'écran (après changement de réglage).</summary>
+    public void RefreshScreenCaptureMode() => ApplyScreenCaptureMode();
+
+    public void UpdatePosition()
     {
         if (!_registered) return;
 
@@ -184,8 +200,33 @@ public sealed class AppBarManager
             SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
+        if (!captureActive)
+            EnsureReserved();
+
         if (BarConfig.ReclaimFullscreenWindows && !captureActive)
             ReclaimForeground(fg);
+    }
+
+    /// <summary>
+    /// Auto-réparation : si la zone de travail ne réserve plus notre hauteur en haut
+    /// de l'écran (réservation perdue -> les fenêtres passent sous la barre), on
+    /// re-réserve automatiquement, sans intervention manuelle.
+    /// </summary>
+    private void EnsureReserved()
+    {
+        if (!_registered)
+            return;
+
+        IntPtr hMon = ResolveMonitor();
+        var mi = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
+        if (!GetMonitorInfo(hMon, ref mi))
+            return;
+
+        int heightPx = (int)Math.Round(BarHeightLogical * GetMonitorScaleY(hMon));
+
+        // Barre en haut : la zone de travail doit commencer AU MOINS sous notre barre.
+        if (mi.rcWork.top < mi.rcMonitor.top + heightPx - 2)
+            UpdatePosition();
     }
 
     private void ReclaimForeground(IntPtr fg)
@@ -246,6 +287,16 @@ public sealed class AppBarManager
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        if (_taskbarCreated != 0 && msg == (int)_taskbarCreated)
+        {
+            // L'Explorateur a redémarré : on se ré-inscrit et on re-réserve l'espace.
+            _registered = false;
+            Register();
+            UpdatePosition();
+            handled = true;
+            return IntPtr.Zero;
+        }
+
         if (msg == (int)_callbackId)
         {
             switch (wParam.ToInt32())
