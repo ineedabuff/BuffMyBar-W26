@@ -120,8 +120,9 @@ public sealed class AppBarManager
 
         var abd = NewData();
         abd.uCallbackMessage = _callbackId;
-        SHAppBarMessage(ABM_NEW, ref abd);
+        uint result = SHAppBarMessage(ABM_NEW, ref abd);
         _registered = true;
+        Logger.Log($"AppBar: ABM_NEW -> {result} (hwnd={_hwnd})");
     }
 
     /// <summary>Ré-inscrit au besoin puis réserve à nouveau l'espace (config à chaud).</summary>
@@ -148,6 +149,8 @@ public sealed class AppBarManager
         if (!GetMonitorInfo(hMon, ref mi))
             return;
 
+        int workTopBefore = mi.rcWork.top;
+
         double scaleY = GetMonitorScaleY(hMon);
         int heightPx = (int)Math.Round(BarHeightLogical * scaleY);
 
@@ -171,6 +174,16 @@ public sealed class AppBarManager
             abd.rc.right - abd.rc.left,
             abd.rc.bottom - abd.rc.top,
             SWP_NOACTIVATE);
+
+        // Informe le shell que la fenêtre de l'AppBar a bougé (recommandé par MSDN) :
+        // sans cela, le shell peut « oublier » la réservation et les fenêtres passent dessous.
+        var moved = NewData();
+        SHAppBarMessage(ABM_WINDOWPOSCHANGED, ref moved);
+
+        // Diagnostic : la zone de travail réserve-t-elle bien notre hauteur ?
+        var after = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
+        GetMonitorInfo(hMon, ref after);
+        Logger.Log($"AppBar: SETPOS h={heightPx} monTop={mi.rcMonitor.top} rc=[{abd.rc.top}..{abd.rc.bottom}] workTop {workTopBefore}->{after.rcWork.top}");
     }
 
     private static double GetMonitorScaleY(IntPtr hMon)
