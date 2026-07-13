@@ -13,6 +13,11 @@ jobs:
     name: Publish BuffBar
     runs-on: windows-latest
 
+    # Signing runs only when the certificate secrets are configured; otherwise
+    # every signing step is skipped and the release is produced unsigned.
+    env:
+      HAS_SIGNING: ${{ secrets.SIGNING_PFX_BASE64 != '' }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +35,23 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:EnableCompressionInSingleFile=true -o .\publish
 
+      - name: Import signing certificate
+        if: env.HAS_SIGNING == 'true'
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\cert.pfx",
+            [Convert]::FromBase64String("${{ secrets.SIGNING_PFX_BASE64 }}"))
+
+      # Sign the app BEFORE packaging so the installer ships a signed BuffBar.exe.
+      - name: Sign application
+        if: env.HAS_SIGNING == 'true'
+        shell: pwsh
+        run: |
+          $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object FullName | Select-Object -Last 1).FullName
+          & $signtool sign /f "$env:RUNNER_TEMP\cert.pfx" /p "${{ secrets.SIGNING_PFX_PASSWORD }}" `
+            /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 .\publish\BuffBar.exe
+
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
@@ -38,7 +60,16 @@ jobs:
         shell: pwsh
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" .\Buffmybar-W26.iss'
 
-      # Portable ZIP alternative.
+      - name: Sign installer
+        if: env.HAS_SIGNING == 'true'
+        shell: pwsh
+        run: |
+          $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object FullName | Select-Object -Last 1).FullName
+          & $signtool sign /f "$env:RUNNER_TEMP\cert.pfx" /p "${{ secrets.SIGNING_PFX_PASSWORD }}" `
+            /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 .\installer\Buffmybar-W26.exe
+
+      # Portable ZIP alternative (contains the signed BuffBar.exe when signing is on).
       - name: Portable ZIP
         shell: pwsh
         run: |
