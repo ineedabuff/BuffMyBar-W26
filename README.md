@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="Assets/logo.png" width="128" alt="BuffMyBar Logo">
-
 # BuffMyBar
 
 ### A native Windows desktop bar inspired by the flexibility of Linux desktops.
@@ -15,7 +13,7 @@ Lightweight • Native WPF • Multi-monitor • Windows 11 Integration • Open
 
 ---
 
-<img src="Assets/screenshots/desktop-dark.png" alt="BuffMyBar Screenshot">
+<img src="Docs/Screenshots/desktop-dark.png" alt="BuffMyBar Screenshot">
 
 </div>
 
@@ -218,25 +216,25 @@ This architecture keeps widgets simple while allowing the framework to evolve in
 
 ## Dark Theme
 
-![Dark Theme](Assets/screenshots/desktop-dark.png)
+![Dark Theme](Docs/Screenshots/desktop-dark.png)
 
 ---
 
 ## Windows Theme Synchronization
 
-![Windows Theme](Assets/screenshots/windows-theme.png)
+![Windows Theme](Docs/Screenshots/windows-theme.png)
 
 ---
 
 ## Audio Visualizer
 
-![Visualizer](Assets/screenshots/visualizer.png)
+![Visualizer](Docs/Screenshots/visualizer.png)
 
 ---
 
 ## OBS Integration
 
-![OBS](Assets/screenshots/obs.png)
+![OBS](Docs/Screenshots/obs.png)
 
 ---
 
