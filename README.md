@@ -214,7 +214,7 @@ This architecture keeps widgets simple while allowing the framework to evolve in
 
 # Gallery
 
-## Buffbar with all options ON
+## BuffMyBar with all options ON
 
 ![Buffbar](Docs/Screenshots/complete-buffbar.png)
 
