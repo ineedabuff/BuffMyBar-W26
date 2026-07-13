@@ -122,7 +122,7 @@ public sealed class AppBarManager
         abd.uCallbackMessage = _callbackId;
         uint result = SHAppBarMessage(ABM_NEW, ref abd);
         _registered = true;
-        Logger.Log($"AppBar: ABM_NEW -> {result} (hwnd={_hwnd})");
+        Logger.Verbose($"AppBar: ABM_NEW -> {result} (hwnd={_hwnd})");
     }
 
     /// <summary>Ré-inscrit au besoin puis réserve à nouveau l'espace (config à chaud).</summary>
@@ -183,7 +183,7 @@ public sealed class AppBarManager
         // Diagnostic : la zone de travail réserve-t-elle bien notre hauteur ?
         var after = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
         GetMonitorInfo(hMon, ref after);
-        Logger.Log($"AppBar: SETPOS h={heightPx} monTop={mi.rcMonitor.top} rc=[{abd.rc.top}..{abd.rc.bottom}] workTop {workTopBefore}->{after.rcWork.top}");
+        Logger.Verbose($"AppBar: SETPOS h={heightPx} monTop={mi.rcMonitor.top} rc=[{abd.rc.top}..{abd.rc.bottom}] workTop {workTopBefore}->{after.rcWork.top}");
     }
 
     private static double GetMonitorScaleY(IntPtr hMon)
