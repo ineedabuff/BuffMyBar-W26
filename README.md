@@ -13,7 +13,7 @@ Lightweight • Native WPF • Multi-monitor • Windows 11 Integration • Open
 
 ---
 
-<img src="Docs/Screenshots/desktop-dark.png" alt="BuffMyBar Screenshot">
+<img src="Docs/Screenshots/complete-buffbar.png" alt="BuffMyBar Screenshot">
 
 </div>
 
@@ -214,9 +214,9 @@ This architecture keeps widgets simple while allowing the framework to evolve in
 
 # Gallery
 
-## Dark Theme
+## Buffbar with all options ON
 
-![Dark Theme](Docs/Screenshots/desktop-dark.png)
+![Buffbar](Docs/Screenshots/complete-buffbar.png)
 
 ---
 
