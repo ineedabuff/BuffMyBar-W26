@@ -16,8 +16,12 @@ jobs:
   publish:
     name: Submit manifest
     runs-on: windows-latest
+    # Skips cleanly (no red failure) until the WINGET_TOKEN secret is set.
+    env:
+      HAS_TOKEN: ${{ secrets.WINGET_TOKEN != '' }}
     steps:
       - name: Submit to winget-pkgs
+        if: env.HAS_TOKEN == 'true'
         uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: IneedABUFF.BuffMyBar
