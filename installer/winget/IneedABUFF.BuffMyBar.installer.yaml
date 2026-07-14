@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 PackageIdentifier: IneedABUFF.BuffMyBar
-PackageVersion: 0.9.0
+PackageVersion: 0.9.1
 InstallerType: inno
 Scope: user
 InstallModes:
@@ -9,7 +9,7 @@ InstallModes:
   - silentWithProgress
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/ineedabuff/BuffMyBar-W26/releases/download/v0.9.0/Buffmybar-W26.exe
+    InstallerUrl: https://github.com/ineedabuff/BuffMyBar-W26/releases/download/v0.9.1/Buffmybar-W26.exe
     # Remplacer par le SHA256 réel de l'exe publié (voir README.md de ce dossier).
     InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
 ManifestType: installer

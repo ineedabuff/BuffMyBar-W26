@@ -10,7 +10,7 @@
     <AssemblyName>BuffBar</AssemblyName>
     <RootNamespace>BuffBar</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.9.0</Version>
+    <Version>0.9.1</Version>
     <Product>BuffBar</Product>
     <Company>ineedabuff</Company>
     <!-- Démarrage rapide, empreinte mémoire réduite -->
