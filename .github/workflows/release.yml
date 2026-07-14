@@ -17,6 +17,7 @@ jobs:
     # every signing step is skipped and the release is produced unsigned.
     env:
       HAS_SIGNING: ${{ secrets.SIGNING_PFX_BASE64 != '' }}
+      HAS_WINGET: ${{ secrets.WINGET_TOKEN != '' }}
 
     steps:
       - name: Checkout
@@ -82,3 +83,18 @@ jobs:
           files: |
             .\installer\Buffmybar-W26.exe
             .\artifacts\BuffBar-win-x64.zip
+
+      # Submit to winget in the SAME run (a release created by GITHUB_TOKEN does
+      # not fire the 'release' event, so a separate release-triggered workflow
+      # would never run). Skipped until WINGET_TOKEN is set.
+      # NOTE: the very first submission of a brand-new package usually has to be
+      # done manually with wingetcreate (see installer/winget/README.md); this
+      # keeps winget up to date for subsequent releases.
+      - name: Publish to winget
+        if: env.HAS_WINGET == 'true'
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: IneedABUFF.BuffMyBar
+          installers-regex: '\.exe$'
+          release-tag: ${{ github.ref_name }}
+          token: ${{ secrets.WINGET_TOKEN }}
