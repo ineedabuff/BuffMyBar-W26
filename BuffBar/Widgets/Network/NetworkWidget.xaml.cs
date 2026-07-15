@@ -11,13 +11,12 @@ using BuffBar.Services;
 namespace BuffBar.Widgets.Network;
 
 /// <summary>
-/// Network module: alternates local/public IP with a subtle fade.
+/// Network module: alternates local (house) / public (globe) IP with a subtle fade.
 /// </summary>
 public partial class NetworkWidget : UserControl, IBarWidget
 {
-    private const string Local = "\uF015";
-    private const string Public = "\uF0AC";
-    private const string Gauge = "\uF0E4";
+    // Jauge (mode jeu) : glyphe Nerd Font, construit par cast pour éviter l'échappement.
+    private static readonly string Gauge = char.ToString((char)0xF0E4);
 
     private static readonly Brush PingGood = Frozen(0xDD, 0xFF, 0x24);
     private static readonly Brush PingMid = Frozen(0xFF, 0xFF, 0xFF);
@@ -30,7 +29,7 @@ public partial class NetworkWidget : UserControl, IBarWidget
 
     private bool _showPublic;
     private string? _publicIp;
-    private string? _lastIcon;
+    private bool _lastPublic;
     private string? _lastIp;
 
     public string WidgetId => "network";
@@ -109,23 +108,18 @@ public partial class NetworkWidget : UserControl, IBarWidget
         Root.Visibility = Visibility.Visible;
 
         bool showPub = canPublic && (_showPublic || !canLocal);
-        string nextIcon = showPub ? Public : Local;
         string? nextIp = showPub ? _publicIp : local;
 
-        bool changed = _lastIcon != nextIcon || _lastIp != nextIp;
-        _lastIcon = nextIcon;
+        bool changed = _lastPublic != showPub || _lastIp != nextIp;
+        _lastPublic = showPub;
         _lastIp = nextIp;
 
+        Icon.Set(showPub);
+
         if (animated && changed)
-        {
-            FadeTextChange(Icon, nextIcon);
             FadeTextChange(Ip, nextIp ?? "-");
-        }
         else
-        {
-            Icon.Text = nextIcon;
             Ip.Text = nextIp ?? "-";
-        }
 
         Root.ToolTip = $"Locale : {local ?? "-"}    Publique : {_publicIp ?? "-"}";
     }

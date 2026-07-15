@@ -97,7 +97,7 @@ public partial class ObsWidget : UserControl, IBarWidget
             if (!_recording)
             {
                 _recording = true;
-                Dot.Foreground = RecBrush;
+                Dot.Fill = RecBrush;
                 Rec.Foreground = RecBrush;
                 Time.Foreground = RecBrush;
                 Time.Visibility = Visibility.Visible;
@@ -110,7 +110,7 @@ public partial class ObsWidget : UserControl, IBarWidget
             _recording = false;
             StopBlink();
             var white = (Brush)FindResource("PrimaryText");
-            Dot.Foreground = white;
+            Dot.Fill = white;
             Rec.Foreground = white;
             Time.Visibility = Visibility.Collapsed;
             Time.Text = string.Empty;

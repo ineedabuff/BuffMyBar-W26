@@ -2,15 +2,12 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:common="clr-namespace:BuffBar.Widgets.Common"
+             xmlns:local="clr-namespace:BuffBar.Widgets.Bluetooth"
              VerticalAlignment="Stretch">
 
     <Border x:Name="Root" Style="{StaticResource ModuleBorder}" ToolTip="Bluetooth">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock x:Name="Icon"
-                       Style="{StaticResource ModuleText}"
-                       FontSize="15"
-                       Margin="0,0,8,0"
-                       Text="&#xF293;"/>
+            <local:BluetoothIcon Width="15" Height="15" Margin="0,0,8,0" VerticalAlignment="Center"/>
             <common:MarqueeText x:Name="DeviceName"
                                 MaxWidth="180"
                                 TextSize="12"

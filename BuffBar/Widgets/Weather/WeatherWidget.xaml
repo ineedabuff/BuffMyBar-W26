@@ -10,7 +10,7 @@
                 ToolTip="Prévisions (au survol)">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <local:AnimatedWeatherIcon x:Name="Icon"
-                                           Width="24" Height="24"
+                                           Width="28" Height="28"
                                            Margin="0,0,8,0"
                                            VerticalAlignment="Center"/>
                 <TextBlock x:Name="Temp"

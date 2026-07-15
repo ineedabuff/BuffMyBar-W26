@@ -10,20 +10,12 @@ using BuffBar.Services;
 namespace BuffBar.Widgets.Volume;
 
 /// <summary>
-/// Module volume : glyphe Nerd Font + pourcentage.
+/// Module volume : icône native (haut-parleur + ondes, barre si muet) + pourcentage.
 /// Molette pour ajuster (pas de 2 %), clic gauche pour couper le son.
-/// Sprint-007:
-/// - 0 a 15 % = couleur normale.
-/// - 16 % et plus = rouge.
-/// - Muet = icone avec barre diagonale.
+/// 16 %+ = rouge ; muet = barre diagonale.
 /// </summary>
 public partial class VolumeWidget : UserControl, IBarWidget
 {
-    // Glyphes Font Awesome 4 (presents dans les Nerd Fonts).
-    private const string Muted = "\uF026"; // volume-off
-    private const string Low = "\uF027";   // volume-down
-    private const string High = "\uF028";  // volume-up
-
     private static readonly Brush Alert = Frozen(0xFF, 0x31, 0x31);
     private const int Step = 2;
 
@@ -59,18 +51,11 @@ public partial class VolumeWidget : UserControl, IBarWidget
 
         Root.Visibility = Visibility.Visible;
 
-        string icon = v.Muted ? Muted : (v.Percent <= 50 ? Low : High);
-        IconLabel.Text = icon;
+        Icon.Set(v.Percent, v.Muted);
         PercentLabel.Text = $"{v.Percent}%";
-
-        // 0-15 % = normal. 16 % et plus = rouge. Muet = normal + slash.
-        Brush foreground = (!v.Muted && v.Percent >= 16)
+        PercentLabel.Foreground = (!v.Muted && v.Percent >= 16)
             ? Alert
             : (Brush)FindResource("PrimaryText");
-
-        IconLabel.Foreground = foreground;
-        PercentLabel.Foreground = foreground;
-        MutedSlash.Visibility = v.Muted ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static Brush Frozen(byte r, byte g, byte b)

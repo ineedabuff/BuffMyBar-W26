@@ -5,11 +5,11 @@
 
     <Border x:Name="Root" Style="{StaticResource ModuleBorder}" ToolTip="État d'enregistrement OBS">
         <StackPanel x:Name="Glyphs" Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock x:Name="Dot"
-                       Style="{StaticResource ModuleText}"
-                       FontSize="12"
-                       Margin="0,0,6,0"
-                       Text="&#x25CF;"/>
+            <Ellipse x:Name="Dot"
+                     Width="9" Height="9"
+                     Fill="{DynamicResource PrimaryText}"
+                     Margin="0,0,6,0"
+                     VerticalAlignment="Center"/>
             <TextBlock x:Name="Rec"
                        Style="{StaticResource ModuleText}"
                        FontSize="12"

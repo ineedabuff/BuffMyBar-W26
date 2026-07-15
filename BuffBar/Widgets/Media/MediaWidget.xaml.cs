@@ -57,7 +57,7 @@ public partial class MediaWidget : UserControl, IBarWidget
             }
 
             Root.Visibility = Visibility.Visible;
-            Icon.Text = info.Playing ? Pause : Play;
+            Icon.Set(info.Playing);
 
             string track = string.IsNullOrWhiteSpace(info.Artist)
                 ? info.Title

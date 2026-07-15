@@ -1,6 +1,7 @@
 <UserControl x:Class="BuffBar.Widgets.Volume.VolumeWidget"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BuffBar.Widgets.Volume"
              VerticalAlignment="Stretch">
 
     <!-- Molette = +/- volume, clic gauche = muet -->
@@ -12,28 +13,10 @@
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
-            <Grid Width="20"
-                  Height="20"
-                  Margin="0,0,4,0"
-                  VerticalAlignment="Center">
-                <TextBlock x:Name="IconLabel"
-                           Style="{StaticResource ModuleText}"
-                           FontSize="16"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextAlignment="Center"/>
-
-                <!-- Sprint-007: slash visible seulement lorsque le volume est muet. -->
-                <Line x:Name="MutedSlash"
-                      X1="4" Y1="16"
-                      X2="16" Y2="4"
-                      Stroke="{Binding Foreground, ElementName=IconLabel}"
-                      StrokeThickness="2"
-                      StrokeStartLineCap="Round"
-                      StrokeEndLineCap="Round"
-                      Visibility="Collapsed"
-                      SnapsToDevicePixels="True"/>
-            </Grid>
+            <local:VolumeIcon x:Name="Icon"
+                              Width="16" Height="16"
+                              Margin="0,0,5,0"
+                              VerticalAlignment="Center"/>
 
             <TextBlock x:Name="PercentLabel"
                        Style="{StaticResource ModuleText}"
