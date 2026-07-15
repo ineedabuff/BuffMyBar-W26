@@ -48,7 +48,8 @@ public partial class BatteryWidget : UserControl, IBarWidget
 
         string icon = LevelGlyph(info.Percent);
         string prefix = info.Charging ? Bolt + " " : string.Empty;
-        WidgetAnimator.SetTextWithFade(Label, $"{prefix}{icon} {info.Percent}%");
+        Icon.Text = $"{prefix}{icon}";
+        WidgetAnimator.SetTextWithFade(Percent, $"{info.Percent}%");
     }
 
     private static string LevelGlyph(int percent) => percent switch

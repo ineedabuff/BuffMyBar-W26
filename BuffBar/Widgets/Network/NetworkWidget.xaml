@@ -8,7 +8,7 @@
             <!-- Segment ping (mode jeu uniquement) -->
             <TextBlock x:Name="PingIcon"
                        Style="{StaticResource ModuleText}"
-                       FontSize="12"
+                       FontSize="15"
                        Margin="0,0,6,0"
                        Visibility="Collapsed"/>
             <TextBlock x:Name="Ping"
@@ -21,7 +21,7 @@
 
             <TextBlock x:Name="Icon"
                        Style="{StaticResource ModuleText}"
-                       FontSize="12"
+                       FontSize="15"
                        Margin="0,0,8,0"/>
             <TextBlock x:Name="Ip"
                        Style="{StaticResource ModuleText}"

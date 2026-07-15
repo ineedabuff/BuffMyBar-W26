@@ -31,6 +31,7 @@ This project follows the principles of **Keep a Changelog** and **Semantic Versi
 
 ### Changed
 
+- Slightly larger bar icons (glyphs 12/13 → 15, weather icon 20 → 24) so they stand out from the value text; battery split into a separate icon + percentage.
 - Settings now apply live: toggling widgets recomposes the bar in place instead of restarting it (no flicker, no position loss).
 - The AppBar re-registers on Explorer restart (`TaskbarCreated`) and self-heals its reserved space when it's lost, so windows no longer slip under the bar and manual "reload position" is rarely needed.
 - Weather now uses Environment Canada's official free citypage feed (accurate Canadian data, no API key) instead of wttr.in; falls back to the first forecast period when a station has no current-condition icon.

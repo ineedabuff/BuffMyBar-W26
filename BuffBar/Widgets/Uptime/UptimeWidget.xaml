@@ -7,7 +7,7 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock x:Name="Icon"
                        Style="{StaticResource ModuleText}"
-                       FontSize="12"
+                       FontSize="15"
                        Margin="0,0,8,0"
                        Text="&#xF1DA;"/>
             <TextBlock x:Name="Label"

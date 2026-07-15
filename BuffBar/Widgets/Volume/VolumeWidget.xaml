@@ -12,21 +12,21 @@
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
-            <Grid Width="17"
-                  Height="17"
+            <Grid Width="20"
+                  Height="20"
                   Margin="0,0,4,0"
                   VerticalAlignment="Center">
                 <TextBlock x:Name="IconLabel"
                            Style="{StaticResource ModuleText}"
-                           FontSize="13"
+                           FontSize="16"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
                            TextAlignment="Center"/>
 
                 <!-- Sprint-007: slash visible seulement lorsque le volume est muet. -->
                 <Line x:Name="MutedSlash"
-                      X1="3" Y1="14"
-                      X2="14" Y2="3"
+                      X1="4" Y1="16"
+                      X2="16" Y2="4"
                       Stroke="{Binding Foreground, ElementName=IconLabel}"
                       StrokeThickness="2"
                       StrokeStartLineCap="Round"

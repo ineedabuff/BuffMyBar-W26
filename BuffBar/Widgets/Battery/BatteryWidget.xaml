@@ -4,9 +4,18 @@
              VerticalAlignment="Stretch">
 
     <Border x:Name="Root" Style="{StaticResource ModuleBorder}">
-        <TextBlock x:Name="Label"
-                   Style="{StaticResource ModuleText}"
-                   FontSize="13"
-                   HorizontalAlignment="Center"/>
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <TextBlock x:Name="Icon"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="15"
+                       Margin="0,0,6,0"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="Percent"
+                       Style="{StaticResource ModuleText}"
+                       FontSize="13"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
     </Border>
 </UserControl>
