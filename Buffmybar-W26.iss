@@ -7,7 +7,7 @@
 
 #define AppName "Buffmybar-W26"
 #define AppExe "BuffBar.exe"
-#define AppVersion "0.9.1"
+#define AppVersion "0.9.2"
 #define Publisher "IneedABUFF"
 
 [Setup]
